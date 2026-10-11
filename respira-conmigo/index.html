@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Respira Conmigo</title>
+<meta name="description" content="Juegos de respiración para niñas, niños y adolescentes: sentir, entender y calmar el cuerpo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFF8EF;
+    --ink: #2E2A3B;
+    --muted: #6B6580;
+    --card: #FFFFFF;
+    --line: #EBDFCF;
+    --accent: #FF8A65;
+    --accent-ink: #FFFFFF;
+    --rojo: #E8505B;
+    --amarillo: #F2A93B;
+    --morado: #9B6BD3;
+    --azul: #4A90D9;
+    --verde: #2FAE7E;
+    --shadow: 0 6px 18px rgba(80, 60, 30, .10);
+    --radius: 22px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 18px;
+    line-height: 1.45;
+    min-height: 100vh;
+  }
+  h1, h2, h3, .display { font-family: "Baloo 2", "Nunito", system-ui, sans-serif; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(32px, 7vw, 48px); }
+  h2 { font-size: clamp(26px, 5.5vw, 36px); }
+  h3 { font-size: 22px; }
+  p { margin: .4em 0; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  header.bar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .brand { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 20px; flex: 1; background: none; border: 0; text-align: left; padding: 0; }
+  .chip-btn {
+    border: 2px solid var(--line); background: var(--card); border-radius: 999px;
+    padding: 6px 12px; font-size: 15px; font-weight: 700; min-height: 40px;
+  }
+  .chip-btn[aria-pressed="false"] { opacity: .55; }
+  .brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 420px) {
+    .brand { font-size: 18px; }
+    .chip-btn { padding: 6px 10px; font-size: 14px; }
+  }
+
+  main { max-width: 860px; margin: 0 auto; padding: 8px 16px 48px; }
+  .screen { animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .center { text-align: center; }
+  .lead { color: var(--muted); font-size: 19px; }
+  .stack > * + * { margin-top: 14px; }
+
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+  .grid.tight { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+
+  .card {
+    background: var(--card); border: 3px solid var(--line); border-radius: var(--radius);
+    padding: 18px; box-shadow: var(--shadow); text-align: left; width: 100%;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  button.card:hover, button.card:focus-visible { transform: translateY(-3px); border-color: var(--c, var(--accent)); outline: none; }
+  .card .big { font-size: 46px; line-height: 1; display: block; margin-bottom: 6px; }
+  .card .t { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 22px; display: block; }
+  .card .s { color: var(--muted); font-size: 16px; display: block; }
+  .card.tinted { background: color-mix(in srgb, var(--c) 14%, var(--card)); border-color: color-mix(in srgb, var(--c) 45%, var(--line)); }
+  .card.selected { border-color: var(--c, var(--accent)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c, var(--accent)) 30%, transparent); }
+
+  .feel { text-align: center; padding: 22px 12px; }
+  .feel .big { font-size: 64px; }
+  .feel.huge .big { font-size: 88px; }
+
+  .badge { display: inline-block; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, var(--card)); color: #A2462A; margin-top: 8px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 0; border-radius: 999px; padding: 14px 26px; min-height: 52px;
+    font-weight: 800; font-size: 19px; background: var(--accent); color: var(--accent-ink);
+    box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 70%, #000);
+  }
+  .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 70%, #000); }
+  .btn.ghost { background: var(--card); color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 22px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 2px solid var(--line); background: var(--card); border-radius: 999px;
+    padding: 8px 14px; font-weight: 700; font-size: 16px; min-height: 42px;
+  }
+  .chip[aria-pressed="true"] { background: color-mix(in srgb, var(--c, var(--accent)) 22%, var(--card)); border-color: var(--c, var(--accent)); }
+
+  .note {
+    background: color-mix(in srgb, var(--amarillo) 14%, var(--card));
+    border: 2px dashed color-mix(in srgb, var(--amarillo) 60%, var(--line));
+    border-radius: 16px; padding: 12px 14px; font-size: 16px;
+  }
+  .note b { display: block; margin-bottom: 2px; }
+  .science { background: color-mix(in srgb, var(--azul) 10%, var(--card)); border-color: color-mix(in srgb, var(--azul) 45%, var(--line)); }
+
+  .validate {
+    font-size: 20px; font-weight: 700; padding: 14px 18px; border-radius: 18px;
+    background: color-mix(in srgb, var(--c) 14%, var(--card));
+    border-left: 8px solid var(--c);
+  }
+
+  /* Breathing stage */
+  .stage { position: relative; width: min(78vw, 320px); aspect-ratio: 1; margin: 10px auto 6px; }
+  .halo { position: absolute; inset: 0; border-radius: 50%; border: 3px dashed color-mix(in srgb, var(--c) 40%, transparent); }
+  .globo {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 40%, #fff), var(--c));
+    display: grid; place-items: center; transform: scale(.45); will-change: transform;
+    box-shadow: 0 10px 40px color-mix(in srgb, var(--c) 40%, transparent);
+  }
+  .globo .emo { font-size: clamp(64px, 20vw, 110px); line-height: 1; }
+  .globo.buzz .emo { animation: buzz .12s linear infinite; }
+  @keyframes buzz { 0% { transform: translate(0,0); } 25% { transform: translate(1.5px,-1px); } 50% { transform: translate(-1px,1px); } 75% { transform: translate(1px,1.5px); } }
+  .stage svg { width: 100%; height: 100%; overflow: visible; }
+  .stage .dot { font-size: 40px; }
+  .cue { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: clamp(26px, 6vw, 36px); min-height: 2.4em; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .count { font-family: "Baloo 2", sans-serif; font-size: 28px; color: var(--muted); min-height: 1.3em; }
+  .rounds { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
+  .rounds span { width: 14px; height: 14px; border-radius: 50%; background: var(--line); transition: background .3s; }
+  .rounds span.done { background: var(--c); }
+  .rounds span.now { background: color-mix(in srgb, var(--c) 50%, var(--line)); }
+
+  .sticker { font-size: 96px; display: inline-block; animation: pop .6s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { from { transform: scale(.2) rotate(-20deg); } to { transform: none; } }
+  .sticker-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .sticker-cell { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 6px; text-align: center; }
+  .sticker-cell .e { font-size: 44px; display: block; }
+  .sticker-cell.locked .e { filter: grayscale(1); opacity: .25; }
+  .sticker-cell small { color: var(--muted); font-size: 13px; display: block; }
+
+  .range { width: 100%; accent-color: var(--c, var(--accent)); height: 36px; }
+  .scale-labels { display: flex; justify-content: space-between; font-size: 26px; }
+
+  .summary { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; font-weight: 700; }
+  .pill { padding: 6px 14px; border-radius: 999px; background: color-mix(in srgb, var(--c) 18%, var(--card)); border: 2px solid var(--c); }
+
+  .guide h3 { margin-top: 22px; }
+  .guide ul { padding-left: 22px; margin: 6px 0; }
+  .guide li { margin: 4px 0; }
+  .footer-link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 16px; padding: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .screen, .sticker { animation: none; }
+    .globo.buzz .emo { animation: none; }
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <button class="brand" data-act="home" aria-label="Ir al inicio">🫧 Respira Conmigo</button>
+  <button class="chip-btn" id="tgl-sound" data-act="toggle-sound" aria-pressed="true" title="Sonido">🔔 Sonido</button>
+  <button class="chip-btn" id="tgl-voice" data-act="toggle-voice" aria-pressed="false" title="Voz que guía">🗣️ Voz</button>
+</header>
+<main id="app"></main>
+
+<script>
+/* =========================================================
+   DATOS: edades, emociones/colores y respiraciones
+   ========================================================= */
+
+// tier = cómo hablamos y qué técnicas usamos en cada etapa
+// inS/outS/holdS = segundos base; rounds = respiraciones por juego
+const AGES = [
+  { id: '3-5',   label: '3 a 5 años',  title: 'Semillitas',     emoji: '🌱', tier: 'mini', inS: 2.5, outS: 3,   holdS: 0,   rounds: 3, counts: false, mode: 'juntos', canSolo: false,
+    blurb: 'Siempre con un adulto. Imágenes, sonidos y juego; 3 respiraciones bastan.' },
+  { id: '6-8',   label: '6 a 8 años',  title: 'Exploradores',   emoji: '🧭', tier: 'kid',  inS: 3,   outS: 3.5, holdS: 1,   rounds: 4, counts: true,  mode: 'juntos', canSolo: true,
+    blurb: 'Animales y colores, contamos juntos y empezamos a notar el cuerpo.' },
+  { id: '9-12',  label: '9 a 12 años', title: 'Aventureros',    emoji: '🚀', tier: 'pre',  inS: 4,   outS: 4.5, holdS: 1.5, rounds: 5, counts: true,  mode: 'juntos', canSolo: true,
+    blurb: 'Más palabras para las emociones, intensidad y por qué funciona.' },
+  { id: '13-15', label: '13 a 15 años', title: 'Navegantes',    emoji: '⛵', tier: 'teen', inS: 4,   outS: 5,   holdS: 2,   rounds: 6, counts: true,  mode: 'solo',   canSolo: true,
+    blurb: 'Técnicas reales con su ciencia. Con un adulto o por tu cuenta.' },
+  { id: '16+',   label: '16 años o más', title: 'Por mi cuenta', emoji: '🌊', tier: 'teen', inS: 4,  outS: 5.5, holdS: 2,   rounds: 8, counts: true,  mode: 'solo',   canSolo: true,
+    blurb: 'Práctica autónoma: elige tu técnica, tu ritmo y observa el cambio.' },
+];
+
+const TIER_ORDER = {
+  mini: ['mini', 'kid', 'pre', 'teen'],
+  kid:  ['kid', 'mini', 'pre', 'teen'],
+  pre:  ['pre', 'teen', 'kid', 'mini'],
+  teen: ['teen', 'pre', 'kid', 'mini'],
+};
+const TIER_RANK = { mini: 0, kid: 1, pre: 2, teen: 3 };
+
+// Colores de emociones (inspirado en Zonas de Regulación y el Medidor de Ánimo de RULER)
+const FEELINGS = {
+  verde:    { color: 'var(--verde)',    emoji: '😊', minTier: 'mini',
+              label: { mini: 'Feliz', kid: 'Feliz o en calma', pre: 'Verde: calma, alegría', teen: 'Verde: en calma, presente' },
+              words: ['calma', 'alegría', 'gratitud', 'concentración', 'ganas de jugar', 'orgullo'],
+              ex: { mini: ['flor', 'estrella'], kid: ['flor', 'estrella'], pre: ['estrella', 'flor'], teen: ['ola', 'estrella'] },
+              msg: { mini: '¡Qué bien! Vamos a guardar esta calma en el corazón. 💚',
+                     kid: '¡Te sientes en calma! Respirar ahora es como entrenar un superpoder para cuando lo necesites.',
+                     pre: 'Practicar cuando estás en calma es lo que más ayuda: tu cuerpo aprende el camino para usarlo en momentos difíciles.',
+                     teen: 'Entrenar en calma es como practicar antes del partido: el cuerpo aprende el camino y luego lo encuentra rápido bajo presión.' } },
+  amarillo: { color: 'var(--amarillo)', emoji: '😬', minTier: 'kid',
+              label: { kid: 'Con nervios', pre: 'Amarillo: nervios, inquietud', teen: 'Amarillo: estrés, ansiedad' },
+              words: ['nervios', 'preocupación', 'estrés', 'inquietud', 'mucha emoción', 'impaciencia'],
+              ex: { kid: ['abeja', 'flor'], pre: ['caja', 'abeja'], teen: ['caja', 'suspiro'] },
+              msg: { kid: 'Cuando hay nervios, la panza se siente con mariposas. 🦋 ¡Vamos a calmarlas!',
+                     pre: 'Los nervios y la preocupación aceleran el cuerpo. Vamos a ayudarlo a ir más despacio.',
+                     teen: 'El estrés activa el modo alerta. Un ritmo de respiración constante le dice a tu cuerpo que puede bajar la guardia.' } },
+  rojo:     { color: 'var(--rojo)',     emoji: '😠', minTier: 'mini',
+              label: { mini: 'Con enojo', kid: 'Con enojo', pre: 'Rojo: enojo, furia', teen: 'Rojo: enojo, frustración' },
+              words: ['enojo', 'frustración', 'furia', 'celos', 'injusticia', 'ganas de gritar'],
+              ex: { mini: ['oso', 'leon'], kid: ['oso', 'leon'], pre: ['oso', 'leon'], teen: ['suspiro', 'oso'] },
+              msg: { mini: 'El enojo es como un volcán. 🌋 ¡Vamos a enfriarlo juntos!',
+                     kid: 'Sentir enojo está bien. Lo importante es lo que hacemos con él. Vamos a darle al cuerpo una pausa.',
+                     pre: 'El enojo te avisa que algo te importa. Primero calmamos el cuerpo; después se piensa con más claridad.',
+                     teen: 'El enojo acelera el corazón y la respiración. Unas pocas exhalaciones largas pueden bajar esa activación en un par de minutos.' } },
+  morado:   { color: 'var(--morado)',   emoji: '😨', minTier: 'mini',
+              label: { mini: 'Con miedo', kid: 'Con miedo', pre: 'Morado: miedo, susto', teen: 'Morado: miedo, inseguridad' },
+              words: ['miedo', 'susto', 'inseguridad', 'vergüenza', 'incertidumbre', 'sentirme en peligro'],
+              ex: { mini: ['tortuga', 'estrella'], kid: ['tortuga', 'estrella'], pre: ['tortuga', 'estrella'], teen: ['tortuga', 'estrella'] },
+              msg: { mini: 'Cuando hay miedo, la tortuga se mete en su caparazón para sentirse segura. 🐢',
+                     kid: 'El miedo es normal: nos ayuda a cuidarnos. Vamos a recordarle al cuerpo que está a salvo.',
+                     pre: 'El miedo pone al cuerpo en alerta. Vamos a mostrarle que aquí y ahora estás a salvo.',
+                     teen: 'El miedo enciende la alarma del cuerpo. Alargar la exhalación y sentir tus manos y pies te ayuda a volver al presente.' } },
+  azul:     { color: 'var(--azul)',     emoji: '😢', minTier: 'mini',
+              label: { mini: 'Triste', kid: 'Triste o con sueño', pre: 'Azul: tristeza, cansancio', teen: 'Azul: tristeza, cansancio' },
+              words: ['tristeza', 'cansancio', 'aburrimiento', 'soledad', 'desánimo', 'extrañar a alguien'],
+              ex: { mini: ['ballena', 'conejito'], kid: ['ballena', 'conejito'], pre: ['ballena', 'conejito'], teen: ['ballena', 'conejito'] },
+              msg: { mini: 'Está bien estar triste. Respiramos juntos y nos damos cariño. 💙',
+                     kid: 'La tristeza también es importante. No hay que apurarla: vamos a acompañarla con una respiración suave.',
+                     pre: 'La tristeza y el cansancio piden cuidado, no prisa. Respira suave y nota qué necesitas.',
+                     teen: 'La tristeza y el cansancio piden cuidado, no prisa. Respira suave y nota qué necesitas de verdad.' } },
+};
+const FEEL_ORDER = ['verde', 'amarillo', 'rojo', 'morado', 'azul'];
+
+const BODY_PARTS = ['🧠 Cabeza', '😶 Cara', '🗣️ Garganta', '💓 Pecho', '🫃 Panza', '✋ Manos', '🦵 Piernas', '🤷 No sé'];
+
+// Fases: in (inhalar), out (exhalar), hold (pausa), sniff (olfateo corto)
+// w = multiplicador del tiempo base de la edad; s = segundos fijos (por tier); to = nivel del globo (0..1)
+const EX = {
+  oso: {
+    name: 'Respiración de oso', emoji: '🐻', color: 'var(--rojo)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: 'El osito tiene mucha fuerza. Cuando siente enojo, respira GRANDE y suelta el aire despacito. ¡Hazlo como el oso!',
+      kid: 'Los osos son grandes y fuertes. Cuando sienten enojo, inflan su gran panza con aire por la nariz y lo sueltan lento por la boca: “ahhh”. Pon tus manos en la panza.',
+      pre: 'Imagina un oso que se prepara para hibernar: cada respiración es más lenta y pesada. Manos en la panza; siente cómo sube y baja.',
+      teen: 'Respiración abdominal lenta con la exhalación más larga que la inhalación. Manos en el abdomen: que se mueva la panza, no los hombros.' },
+    phases: [
+      { t: 'in',   cue: { mini: 'Huele la miel 🍯', kid: 'Infla tu panza de oso por la nariz', pre: 'Inhala por la nariz, llena la panza', teen: 'Inhala por la nariz' } },
+      { t: 'hold', w: 1, cue: { mini: 'Quieto como un oso', teen: 'Pausa breve' } },
+      { t: 'out',  w: 1.3, cue: { mini: 'Suelta el aire: ahhh…', kid: 'Suelta despacito por la boca: ahhh…', teen: 'Exhala lento por la boca' } },
+    ],
+    ending: { juntos: '¡Ahora dense un ABRAZO DE OSO bien apretado! 🤗', solo: 'Cruza los brazos y date un abrazo de oso: aprieta suave… y suelta. 🤗' },
+    adult: 'Ponte a su altura y exagera tu respiración para que te imite: tu calma es contagiosa. Ofrece el abrazo al final, sin imponerlo.',
+    why: 'Cuando la exhalación dura más que la inhalación, el corazón se desacelera un poco y se activa el sistema nervioso parasimpático: el “freno” natural del cuerpo.',
+  },
+  leon: {
+    name: 'Rugido de león', emoji: '🦁', color: 'var(--rojo)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: '¡El león tiene un rugido enorme! Vamos a sacar el enojo rugiendo.',
+      kid: 'El león no se guarda el enojo: lo saca con un gran rugido. Toma aire por la nariz, abre bien la boca, saca la lengua… ¡y ruge!',
+      pre: 'La respiración del león (del yoga) suelta la tensión de la cara, la mandíbula y el pecho. ¡Se vale hacer ruido!' },
+    phases: [
+      { t: 'in',  cue: { mini: 'Toma aire y saca tus garras 🐾', kid: 'Inhala por la nariz y estira tus garras 🐾' } },
+      { t: 'out', w: 0.9, cue: '¡Saca la lengua y ruge: AHHHH! 🦁' },
+    ],
+    ending: { juntos: 'Rujan una última vez… y ahora escuchen el silencio. ¿Qué cambió en tu cuerpo?', solo: 'Un último rugido… y ahora escucha el silencio. ¿Qué cambió en tu cuerpo?' },
+    adult: 'Ruge con ellos y haz caras graciosas: el juego también regula. Es ideal para descargar energía antes de una respiración más lenta, como la del oso.',
+    why: 'Una exhalación fuerte y sonora libera tensión muscular y convierte la emoción en juego, lo que facilita pasar después a una respiración lenta.',
+  },
+  suspiro: {
+    name: 'Suspiro doble', emoji: '😮‍💨', color: 'var(--rojo)', visual: 'globo', minTier: 'pre',
+    intro: {
+      pre: 'Tu cuerpo ya sabe hacer esto: cuando terminas de llorar, suspiras. Dos inhalaciones por la nariz —una grande y otra cortita para llenar el último espacio— y una exhalación muy larga por la boca.',
+      teen: 'El “suspiro fisiológico”: doble inhalación por la nariz + exhalación larga por la boca. Es una de las formas más rápidas que tiene tu cuerpo de soltar tensión.' },
+    phases: [
+      { t: 'in', w: 1, to: 0.8, cue: 'Inhala por la nariz' },
+      { t: 'sniff', to: 1, cue: 'Un poquito más ⬆️' },
+      { t: 'out', w: 1.6, cue: 'Exhala largo por la boca' },
+    ],
+    ending: { juntos: 'Noten sus hombros, su mandíbula y sus manos. ¿Hay algo más suelto que antes?', solo: 'Nota tus hombros, tu mandíbula y tus manos. ¿Hay algo más suelto que antes?' },
+    adult: 'No hace falta forzar la segunda inhalación: es solo un “toque” extra de aire. Si aparece un bostezo, ¡es buena señal!',
+    why: 'En un estudio con adultos (Balban y colaboradores, 2023), 5 minutos diarios de “suspiro cíclico” mejoraron el ánimo y bajaron la frecuencia respiratoria en reposo más que una meditación de atención plena.',
+  },
+  abeja: {
+    name: 'Zumbido de abeja', emoji: '🐝', color: 'var(--amarillo)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: 'La abejita hace “mmmmm” cuando vuela. ¡Vamos a zumbar como abejas!',
+      kid: 'Toma aire por la nariz y suéltalo con la boca cerrada haciendo “mmmmm”, como una abeja. Siente cómo vibran tu cara y tu pecho.',
+      pre: 'La respiración de abeja (bhramari, del yoga): el zumbido alarga la exhalación sin esfuerzo, y la vibración te da algo en qué concentrarte en lugar de la preocupación.' },
+    phases: [
+      { t: 'in',  cue: 'Inhala por la nariz 🌼' },
+      { t: 'out', w: 1.4, buzz: true, cue: 'Zumba con la boca cerrada: mmmmm 🐝' },
+    ],
+    ending: { juntos: 'Pongan las manos en la cara: ¿todavía sienten un cosquilleo?', solo: 'Pon las manos en tu cara: ¿todavía sientes un cosquilleo?' },
+    adult: 'Pueden taparse suavemente los oídos con los dedos para sentir el zumbido por dentro. Zumben juntos: a los peques les encanta.',
+    why: 'El zumbido alarga la exhalación de forma natural y su vibración atrae la atención al cuerpo, lo que interrumpe el ciclo de pensamientos preocupados.',
+  },
+  caja: {
+    name: 'Respiración cuadrada', emoji: '📦', color: 'var(--amarillo)', visual: 'caja', minTier: 'pre',
+    intro: {
+      pre: 'Sigue la cajita alrededor del cuadrado: un lado para inhalar, uno para sostener, uno para exhalar y uno para descansar.',
+      teen: 'Box breathing: 4 tiempos iguales (inhalar, sostener, exhalar, sostener). La usan deportistas y equipos de rescate para pensar con claridad bajo presión.' },
+    phases: [
+      { t: 'in',   s: { pre: 3, teen: 4 }, cue: 'Inhala… ⬆️' },
+      { t: 'hold', s: { pre: 3, teen: 4 }, to: 1, cue: 'Sostén suave… ➡️' },
+      { t: 'out',  s: { pre: 3, teen: 4 }, cue: 'Exhala… ⬇️' },
+      { t: 'hold', s: { pre: 3, teen: 4 }, to: 0, cue: 'Descansa… ⬅️' },
+    ],
+    ending: { juntos: 'Cuatro lados, un cuadrado completo. ¿Cómo está tu mente ahora: más rápida o más lenta?', solo: 'Cuatro lados, un cuadrado completo. ¿Tu mente va más rápido o más lento que antes?' },
+    adult: 'Para 9–12 años usamos 3 tiempos. Si sostener el aire le incomoda, que solo haga una pausa suave sin apretar la garganta.',
+    why: 'El ritmo predecible y el conteo ocupan la memoria de trabajo (la que se llena de preocupaciones), y respirar más lento baja la activación del cuerpo.',
+  },
+  tortuga: {
+    name: 'Tortuga en su caparazón', emoji: '🐢', color: 'var(--morado)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: 'Cuando la tortuga siente miedo, se mete en su caparazón, donde está segura. Abraza tus rodillas como una tortuga y respira despacito.',
+      kid: 'La tortuga se mete en su caparazón para sentirse segura. Haz bolita tu cuerpo, pon las manos en la panza y respira lento. Sales cuando tú quieras.',
+      pre: 'Tu caparazón es tu espacio seguro. Respira lento, siente el peso de tu cuerpo en el piso o la silla y nota que aquí y ahora estás a salvo.' },
+    phases: [
+      { t: 'in',   cue: { mini: 'Respira despacito por la nariz 🐢', pre: 'Inhala lento por la nariz' } },
+      { t: 'hold', w: 1, cue: { mini: 'Calientito en tu caparazón', pre: 'Siente tu cuerpo apoyado' } },
+      { t: 'out',  w: 1.5, cue: { mini: 'Suelta el aire muuuy despacio', pre: 'Exhala muy despacio' } },
+    ],
+    ending: { juntos: 'Poco a poco, la tortuga saca la cabeza… Miren alrededor y nombren 3 cosas que ven. Estás a salvo. 💜', solo: 'Poco a poco, saca la cabeza del caparazón… nombra 3 cosas que ves y 2 que escuchas. Estás a salvo. 💜' },
+    adult: 'Siéntate cerca y ofrece tu mano o tu regazo. Con miedo, la presencia de un adulto calmado es la herramienta más poderosa. No preguntes “¿por qué?” todavía: primero calma, después conversación.',
+    why: 'Alargar la exhalación y orientarse en el espacio (nombrar lo que ves y escuchas) le dicen al sistema de alarma que no hay peligro inmediato.',
+  },
+  estrella: {
+    name: 'Estrella de 5 dedos', emoji: '⭐', color: 'var(--verde)', visual: 'estrella', minTier: 'mini', rounds: 5,
+    intro: {
+      mini: 'Abre tu manita como una estrella. ⭐ Con un dedito de la otra mano vamos a subir y bajar por cada dedo.',
+      kid: 'Abre tu mano como estrella. Con el dedo índice de la otra mano, sube por un dedo mientras inhalas y baja mientras exhalas. ¡5 dedos, 5 respiraciones!',
+      pre: 'Respiración de los 5 dedos: tocar y mirar tu mano te ancla al presente cuando la mente se acelera. Sube por cada dedo inhalando, baja exhalando.' },
+    phases: [
+      { t: 'in',  cue: 'Sube por el dedo… inhala ☝️' },
+      { t: 'out', cue: 'Baja… exhala 👇' },
+    ],
+    ending: { juntos: 'Junten las manos y frótenlas hasta que se calienten. ¡Lo hicieron! ⭐', solo: 'Junta las manos y frótalas hasta que se calienten. ¡Lo hiciste! ⭐' },
+    adult: 'Al principio, traza tú el recorrido sobre su mano: el tacto ayuda a los más pequeños a seguir el ritmo.',
+    why: 'Combinar tacto, vista y respiración (multisensorial) facilita la atención y le da a la mente algo concreto que seguir.',
+  },
+  ballena: {
+    name: 'Chorro de ballena', emoji: '🐳', color: 'var(--azul)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: 'La ballena toma mucho aire y luego lo saca por arriba: ¡pfff! Vamos a respirar como ballenas.',
+      kid: 'Las ballenas suben a la superficie a tomar una gran bocanada de aire y la sueltan como un chorro. Pon una mano en tu corazón mientras respiras.',
+      pre: 'Con una mano en el corazón, respira profundo y suelta el aire despacio. No tienes que cambiar cómo te sientes: solo acompañarte.' },
+    phases: [
+      { t: 'in',   w: 1.1, cue: { mini: 'Sube a tomar aire 🌊', pre: 'Inhala profundo, mano en el corazón' } },
+      { t: 'hold', w: 1, cue: { mini: 'Flota…', pre: 'Pausa suave' } },
+      { t: 'out',  w: 1.3, cue: { mini: 'Suelta el chorro: pfffff 🐳', pre: 'Exhala despacio' } },
+    ],
+    ending: { juntos: 'Pon una mano en tu corazón. Está bien sentirse así; la tristeza pasa como las olas. 💙 ¿Quieres contarme algo?', solo: 'Mano en el corazón. Está bien sentirse así; la tristeza pasa como las olas. 💙 ¿Hay alguien con quien te gustaría hablar?' },
+    adult: 'Valida antes de animar: “Veo que estás triste, aquí estoy”. No hace falta “arreglar” la tristeza; tu compañía ya ayuda a regularla.',
+    why: 'Una mano en el pecho y una respiración suave activan señales de cuidado y seguridad. Nombrar y validar la emoción ayuda más que intentar quitarla.',
+  },
+  conejito: {
+    name: 'Olfateo de conejito', emoji: '🐰', color: 'var(--azul)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: 'El conejito olfatea: snif, snif, snif… ¡y suelta todo el aire!',
+      kid: '¿Tienes sueño o poca energía? Haz como el conejito: tres olfateadas rápidas por la nariz y un soplido largo.',
+      pre: 'Tres inhalaciones cortas por la nariz y una exhalación larga: despierta el cuerpo sin acelerarlo.' },
+    phases: [
+      { t: 'sniff', to: 0.34, cue: 'Snif 🐰' },
+      { t: 'sniff', to: 0.67, cue: 'Snif' },
+      { t: 'sniff', to: 1,    cue: 'Snif' },
+      { t: 'out',   w: 1.5,   cue: 'Suelta todo el aire por la boca' },
+    ],
+    ending: { juntos: '¡Estírense como conejos gigantes, brazos arriba! ¿Hay un poquito más de energía?', solo: '¡Estírate, brazos arriba! ¿Tienes un poquito más de energía?' },
+    adult: 'Si aparece mareo, hagan una pausa con respiración normal entre rondas.',
+    why: 'Las inhalaciones cortas activan un poquito el cuerpo y la exhalación larga evita que se acelere de más.',
+  },
+  flor: {
+    name: 'Huele la flor, sopla la vela', emoji: '🌸', color: 'var(--verde)', visual: 'globo', minTier: 'mini',
+    intro: {
+      mini: 'Huele la flor 🌸… ¡y sopla la vela! 🕯️',
+      kid: 'Imagina una flor en una mano y una vela en la otra. Huele la flor despacito por la nariz y sopla la vela suave, como si no quisieras apagarla.',
+      pre: 'Inhala como si olieras una flor (lento, por la nariz) y exhala como si soplaras una vela sin apagarla (lento, por la boca).' },
+    phases: [
+      { t: 'in',  emoji: '🌸', cue: 'Huele la flor 🌸' },
+      { t: 'out', w: 1.2, emoji: '🕯️', cue: 'Sopla la vela despacito 🕯️' },
+    ],
+    ending: { juntos: '¡Muy bien! Díganse una cosa bonita que hicieron hoy. 💚', solo: 'Piensa en una cosa buena de hoy y guárdala. 💚' },
+    adult: 'Usa tus dedos: uno es la flor y otro la vela. Con los de 3 años, una flor real o una vela (apagada) ayuda muchísimo.',
+    why: 'Las imágenes concretas (oler, soplar) enseñan a inhalar por la nariz y exhalar lento sin necesidad de entender la idea abstracta de “respira lento”.',
+  },
+  ola: {
+    name: 'Respiración de ola', emoji: '🌊', color: 'var(--verde)', visual: 'globo', minTier: 'pre',
+    intro: {
+      pre: 'Como las olas del mar: la ola sube 4, la ola baja 4. Un ritmo parejo y tranquilo.',
+      teen: 'Respiración coherente o de resonancia: unas 6 respiraciones por minuto (5 s inhalar, 5 s exhalar). Ese ritmo suele maximizar la variabilidad del ritmo cardíaco.' },
+    phases: [
+      { t: 'in',  s: { pre: 4, teen: 5 }, cue: 'La ola sube… inhala 🌊' },
+      { t: 'out', s: { pre: 4, teen: 5 }, cue: 'La ola baja… exhala' },
+    ],
+    ending: { juntos: 'Noten cómo está su cuerpo ahora. Practicarla unos minutos al día la convierte en hábito.', solo: 'Nota cómo está tu cuerpo ahora. Unos minutos al día la convierten en hábito.' },
+    adult: 'Funciona muy bien como rutina diaria (antes de dormir o de una tarea), no solo en momentos difíciles.',
+    why: 'Respirar alrededor de 6 veces por minuto sincroniza la respiración y el ritmo cardíaco; es la base del biofeedback de variabilidad cardíaca (Lehrer y Gevirtz, 2014).',
+  },
+};
+const EX_ORDER = ['flor', 'oso', 'leon', 'abeja', 'tortuga', 'ballena', 'conejito', 'estrella', 'suspiro', 'caja', 'ola'];
+
+/* =========================================================
+   ESTADO, PREFERENCIAS Y UTILIDADES
+   ========================================================= */
+const STORE_KEY = 'respira-conmigo-v1';
+function loadStore() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveStore() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) { /* sin almacenamiento: el juego sigue */ }
+}
+const store = Object.assign({ stickers: {}, sound: true, voice: false, ageId: null }, loadStore());
+
+const S = {
+  age: AGES.find(a => a.id === store.ageId) || null,
+  mode: null, feel: null, words: [], body: [], intensity: 3,
+  post: null, postIntensity: 3, exId: null, fromLibrary: false,
+};
+
+const $app = document.getElementById('app');
+const tier = () => (S.age ? S.age.tier : 'kid');
+function pick(v, t = tier()) {
+  if (v == null || typeof v !== 'object') return v;
+  for (const k of TIER_ORDER[t]) if (v[k] != null) return v[k];
+  return '';
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const allowed = minTier => TIER_RANK[tier()] >= TIER_RANK[minTier];
+const isJuntos = () => S.mode === 'juntos';
+
+/* ---------- sonido y voz ---------- */
+let audioCtx = null;
+function chime(freq) {
+  if (!store.sound) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.07, t + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(t); o.stop(t + 1);
+  } catch (e) { /* audio no disponible */ }
+}
+function speak(text) {
+  if (!store.voice || !('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\p{Extended_Pictographic}|️|‍/gu, '').trim());
+    u.lang = 'es-ES'; u.rate = 0.85; u.pitch = 1.1;
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) { /* voz no disponible */ }
+}
+function syncToggles() {
+  document.getElementById('tgl-sound').setAttribute('aria-pressed', String(store.sound));
+  document.getElementById('tgl-voice').setAttribute('aria-pressed', String(store.voice));
+}
+
+/* =========================================================
+   PANTALLAS
+   ========================================================= */
+function render(html) {
+  stopRun();
+  $app.innerHTML = `<section class="screen">${html}</section>`;
+  window.scrollTo(0, 0);
+}
+
+function screenHome() {
+  render(`
+    <div class="center stack" style="margin:18px 0 22px">
+      <h1>¡Hola! Vamos a respirar 🫧</h1>
+      <p class="lead">Juegos para sentir, entender y calmar el cuerpo con la respiración.<br>¿Qué edad tiene quien va a jugar?</p>
+    </div>
+    <div class="grid">
+      ${AGES.map(a => `
+        <button class="card" data-act="age" data-id="${a.id}" style="--c:var(--accent)">
+          <span class="big">${a.emoji}</span>
+          <span class="t">${a.label}</span>
+          <span class="s"><b>${a.title}.</b> ${a.blurb}</span>
+        </button>`).join('')}
+    </div>
+    <p class="center" style="margin-top:22px"><button class="footer-link" data-act="guide">📖 Guía para mamás, papás y educadores</button></p>
+  `);
+}
+
+function screenMode() {
+  const a = S.age;
+  const recJuntos = a.mode === 'juntos';
+  render(`
+    <div class="center stack" style="margin:14px 0 20px">
+      <h2>${a.emoji} ${a.label}</h2>
+      <p class="lead">¿Cómo van a jugar hoy?</p>
+    </div>
+    <div class="grid">
+      <button class="card" data-act="mode" data-id="juntos">
+        <span class="big">👩‍👧</span><span class="t">Juntos</span>
+        <span class="s">Un adulto guía, lee las indicaciones y respira al mismo tiempo.</span>
+        ${recJuntos ? '<span class="badge">Recomendado para esta edad</span>' : ''}
+      </button>
+      <button class="card" data-act="mode" data-id="solo">
+        <span class="big">🙋</span><span class="t">Por mi cuenta</span>
+        <span class="s">Sigo las instrucciones en la pantalla a mi ritmo.</span>
+        ${!recJuntos ? '<span class="badge">Recomendado para esta edad</span>' : ''}
+      </button>
+    </div>
+    <p class="center" style="margin-top:18px"><button class="footer-link" data-act="home">← Cambiar edad</button></p>
+  `);
+}
+
+function screenMenu() {
+  const a = S.age;
+  const n = Object.keys(store.stickers).length;
+  render(`
+    <div class="center stack" style="margin:14px 0 20px">
+      <h2>${a.emoji} ${a.title}</h2>
+      <p class="lead">${a.label} · ${isJuntos() ? 'Jugamos juntos 👩‍👧' : 'Por mi cuenta 🙋'}</p>
+    </div>
+    <div class="grid">
+      <button class="card tinted" style="--c:var(--accent)" data-act="checkin">
+        <span class="big">🌈</span><span class="t">¿Cómo me siento?</span>
+        <span class="s">Elige tu color y descubre qué animal te ayuda a respirar.</span>
+      </button>
+      <button class="card" data-act="library">
+        <span class="big">🐾</span><span class="t">Todas las respiraciones</span>
+        <span class="s">Elige directamente un juego de respiración.</span>
+      </button>
+      <button class="card" data-act="collection">
+        <span class="big">🏅</span><span class="t">Mi colección</span>
+        <span class="s">${n ? `Tienes ${n} de ${EX_ORDER.length} stickers.` : 'Gana un sticker por cada respiración.'}</span>
+      </button>
+    </div>
+    <p class="center" style="margin-top:18px">
+      <button class="footer-link" data-act="home">Cambiar edad</button>
+      ${a.canSolo ? '<button class="footer-link" data-act="to-mode">Cambiar modo</button>' : ''}
+      <button class="footer-link" data-act="guide">Guía para adultos</button>
+    </p>
+  `);
+}
+
+function feelingsForTier() {
+  return FEEL_ORDER.filter(k => allowed(FEELINGS[k].minTier));
+}
+
+function screenCheckin(post = false) {
+  const t = tier();
+  const q = post
+    ? (t === 'mini' ? '¿Y ahora? ¿Cómo te sientes?' : '¿Y ahora, de qué color te sientes?')
+    : (t === 'mini' ? '¿Cómo te sientes? Señala tu carita.' : t === 'kid' ? '¿De qué color es lo que sientes ahora?' : '¿En qué color estás ahora mismo?');
+  const keys = feelingsForTier();
+  render(`
+    <div class="center stack" style="margin:14px 0 20px">
+      <h2>${q}</h2>
+      ${!post && isJuntos() && t === 'mini' ? '<div class="note" style="text-align:left"><b>👩‍👧 Para el adulto</b>Lee en voz alta, señala cada carita y haz la cara tú también. Si no sabe elegir, nombra lo que observas: “Veo que tus manos están apretadas… ¿será enojo?”.</div>' : ''}
+      ${!post && t !== 'mini' ? '<p class="lead">No hay respuestas buenas o malas: todos los colores son parte de ti.</p>' : ''}
+    </div>
+    <div class="grid ${t === 'mini' ? '' : 'tight'}">
+      ${keys.map(k => {
+        const f = FEELINGS[k];
+        return `<button class="card tinted feel ${t === 'mini' ? 'huge' : ''}" style="--c:${f.color}" data-act="${post ? 'post-feel' : 'feel'}" data-id="${k}">
+          <span class="big">${f.emoji}</span><span class="t">${esc(pick(f.label))}</span></button>`;
+      }).join('')}
+    </div>
+  `);
+}
+
+function screenDetails() {
+  const t = tier();
+  const f = FEELINGS[S.feel];
+  if (t === 'mini') return screenIntro(pick(f.ex)[0]);
+  render(`
+    <div class="stack" style="--c:${f.color}">
+      <div class="center"><span style="font-size:60px">${f.emoji}</span><h2>Vamos a conocer ese ${S.feel}</h2></div>
+      ${t !== 'kid' ? `
+        <div class="card">
+          <h3>¿Qué palabra le queda mejor?</h3>
+          <p class="s" style="color:var(--muted)">Puedes elegir más de una. Ponerle nombre a una emoción ya ayuda a calmarla.</p>
+          <div class="chips" style="margin-top:10px">
+            ${f.words.map(w => `<button class="chip" style="--c:${f.color}" data-act="word" data-id="${esc(w)}" aria-pressed="${S.words.includes(w)}">${esc(w)}</button>`).join('')}
+          </div>
+        </div>` : ''}
+      <div class="card">
+        <h3>¿Dónde lo sientes en tu cuerpo?</h3>
+        <p class="s" style="color:var(--muted)">Cierra los ojos un momento (o mira al piso) y busca.</p>
+        <div class="chips" style="margin-top:10px">
+          ${BODY_PARTS.map(b => `<button class="chip" style="--c:${f.color}" data-act="body" data-id="${esc(b)}" aria-pressed="${S.body.includes(b)}">${b}</button>`).join('')}
+        </div>
+      </div>
+      ${t !== 'kid' ? `
+        <div class="card">
+          <h3>¿Qué tan fuerte es? <span id="int-val">${S.intensity}</span>/5</h3>
+          <input class="range" type="range" min="1" max="5" step="1" value="${S.intensity}" data-act="intensity" aria-label="Intensidad de 1 a 5">
+          <div class="scale-labels"><span>🌤️</span><span>⛈️</span></div>
+        </div>` : ''}
+      <div class="btn-row"><button class="btn" data-act="details-done">Continuar ➜</button></div>
+    </div>
+  `);
+}
+
+function screenIntro(exId) {
+  S.exId = exId;
+  const ex = EX[exId];
+  const f = S.feel && !S.fromLibrary ? FEELINGS[S.feel] : null;
+  const c = f ? f.color : ex.color;
+  const alts = f ? pick(f.ex).filter(id => id !== exId && allowed(EX[id].minTier)) : [];
+  render(`
+    <div class="stack" style="--c:${c}">
+      ${f ? `<div class="validate">${esc(pick(f.msg))}</div>` : ''}
+      <div class="center">
+        <span class="sticker" style="font-size:90px">${ex.emoji}</span>
+        <h2>${esc(ex.name)}</h2>
+      </div>
+      <p style="font-size:20px">${esc(pick(ex.intro))}</p>
+      ${isJuntos() ? `<div class="note"><b>👩‍👧 Para el adulto</b>${esc(ex.adult)}</div>` : ''}
+      ${TIER_RANK[tier()] >= TIER_RANK.pre ? `<div class="note science"><b>🔬 ¿Por qué funciona?</b>${esc(ex.why)}</div>` : ''}
+      <div class="btn-row">
+        <button class="btn" data-act="start">¡Empezar! ▶</button>
+        ${alts.length ? `<button class="btn ghost" data-act="intro" data-id="${alts[0]}">Probar otra: ${EX[alts[0]].emoji}</button>` : ''}
+      </div>
+    </div>
+  `);
+}
+
+/* ---------- el motor de respiración ---------- */
+let run = null;
+function stopRun() {
+  if (run) { cancelAnimationFrame(run.raf); run = null; }
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
+}
+
+function buildTimeline(ex) {
+  const a = S.age, seq = [];
+  const rounds = ex.rounds || a.rounds;
+  for (let r = 0; r < rounds; r++) {
+    for (const p of ex.phases) {
+      let d;
+      if (p.s != null) d = pick(p.s);
+      else if (p.t === 'in') d = a.inS * (p.w || 1);
+      else if (p.t === 'out') d = a.outS * (p.w || 1);
+      else if (p.t === 'hold') { if (!a.holdS) continue; d = a.holdS * (p.w || 1); } // sin retención para los más pequeños
+      else if (p.t === 'sniff') d = 0.7;
+      seq.push(Object.assign({}, p, { d, round: r }));
+    }
+  }
+  return seq;
+}
+
+const ease = k => 0.5 - Math.cos(Math.PI * k) / 2;
+
+function pathPoints(kind) {
+  if (kind === 'caja') return [[60, 240], [60, 60], [240, 60], [240, 240]];
+  const pts = [];
+  for (let k = 0; k < 10; k++) {
+    const ang = (-126 + 36 * k) * Math.PI / 180, r = k % 2 ? 125 : 55;
+    pts.push([150 + r * Math.cos(ang), 150 + r * Math.sin(ang)]);
+  }
+  return pts;
+}
+
+function screenBreath() {
+  const ex = EX[S.exId];
+  const c = (S.feel && !S.fromLibrary) ? FEELINGS[S.feel].color : ex.color;
+  const rounds = ex.rounds || S.age.rounds;
+  let stage;
+  if (ex.visual === 'globo') {
+    stage = `<div class="halo"></div><div class="globo" id="globo"><span class="emo" id="emo">${ex.emoji}</span></div>`;
+  } else {
+    const pts = pathPoints(ex.visual);
+    const poly = pts.map(p => p.join(',')).join(' ');
+    stage = `<svg viewBox="0 0 300 300" aria-hidden="true">
+      <polygon points="${poly}" fill="color-mix(in srgb, ${c} 14%, transparent)" stroke="${c}" stroke-width="8" stroke-linejoin="round"/>
+      <line id="seg" x1="0" y1="0" x2="0" y2="0" stroke="${c}" stroke-width="14" stroke-linecap="round" opacity=".35"/>
+      <text id="dot" class="dot" x="${pts[0][0]}" y="${pts[0][1]}" text-anchor="middle" dominant-baseline="central">${ex.emoji}</text>
+    </svg>`;
+  }
+  render(`
+    <div class="center" style="--c:${c}">
+      <p class="lead" style="margin:4px 0 0">${ex.emoji} ${esc(ex.name)}</p>
+      <div class="stage" id="stage">${stage}</div>
+      <div class="cue" id="cue" aria-live="polite">Prepárate…</div>
+      <div class="count" id="count"></div>
+      <div class="rounds" id="rounds">${Array.from({ length: rounds }, () => '<span></span>').join('')}</div>
+      <div class="btn-row">
+        <button class="btn ghost" data-act="pause" id="pause-btn">⏸ Pausa</button>
+        <button class="btn ghost" data-act="finish">Terminar</button>
+      </div>
+      ${isJuntos() ? `<p style="color:var(--muted);font-size:15px;margin-top:16px">👩‍👧 Respira tú también, más lento y exagerado. Si aparece mareo, paren y respiren normal.</p>` : ''}
+    </div>
+  `);
+  startRun(ex);
+}
+
+function startRun(ex) {
+  const seq = [{ t: 'ready', d: 3, cue: 'Prepárate…', round: -1 }].concat(buildTimeline(ex));
+  const now = performance.now();
+  run = { ex, seq, i: -1, level: 0, from: 0, to: 0, start: now, paused: false, pausedAt: 0, raf: 0,
+          pts: ex.visual !== 'globo' ? pathPoints(ex.visual) : null,
+          els: { globo: document.getElementById('globo'), emo: document.getElementById('emo'), dot: document.getElementById('dot'),
+                 seg: document.getElementById('seg'), cue: document.getElementById('cue'), count: document.getElementById('count'),
+                 rounds: document.querySelectorAll('#rounds span') } };
+  nextPhase(now);
+  run.raf = requestAnimationFrame(tick);
+}
+
+function nextPhase(now) {
+  run.i++;
+  if (run.i >= run.seq.length) { const done = run; run = null; cancelAnimationFrame(done.raf); screenEnding(); return false; }
+  const p = run.seq[run.i];
+  run.from = run.level; run.start = now;
+  run.to = p.to != null ? p.to : p.t === 'in' ? 1 : p.t === 'out' ? 0 : run.level;
+  const cue = pick(p.cue) || (p.t === 'hold' ? 'Pausa suave…' : '');
+  run.els.cue.textContent = cue;
+  if (run.els.emo) run.els.emo.textContent = p.emoji || run.ex.emoji;
+  if (run.els.globo) run.els.globo.classList.toggle('buzz', !!p.buzz);
+  run.els.rounds.forEach((el, k) => { el.className = k < p.round ? 'done' : k === p.round ? 'now' : ''; });
+  if (p.t !== 'ready') {
+    chime(p.t === 'in' || p.t === 'sniff' ? 523 : p.t === 'out' ? 392 : 440);
+    if (p.t !== 'sniff' || p.cue !== 'Snif') speak(cue);
+  }
+  return true;
+}
+
+function tick(now) {
+  if (!run) return;
+  if (!run.paused) {
+    const p = run.seq[run.i];
+    const k = Math.min(1, (now - run.start) / 1000 / p.d);
+    run.level = run.from + (run.to - run.from) * ease(k);
+    if (run.els.globo) {
+      run.els.globo.style.transform = `scale(${0.45 + 0.55 * run.level})`;
+    } else if (run.pts && p.t !== 'ready') {
+      const idx = run.i - 1, n = run.pts.length;
+      const A = run.pts[idx % n], B = run.pts[(idx + 1) % n], e = ease(k);
+      const x = A[0] + (B[0] - A[0]) * e, y = A[1] + (B[1] - A[1]) * e;
+      run.els.dot.setAttribute('x', x); run.els.dot.setAttribute('y', y);
+      run.els.seg.setAttribute('x1', A[0]); run.els.seg.setAttribute('y1', A[1]);
+      run.els.seg.setAttribute('x2', x); run.els.seg.setAttribute('y2', y);
+    }
+    const left = Math.ceil(p.d - (now - run.start) / 1000);
+    run.els.count.textContent = (p.t === 'ready' || (S.age.counts && p.t !== 'sniff')) && left > 0 ? left : '';
+    if (k >= 1 && !nextPhase(now)) return;
+  }
+  run.raf = requestAnimationFrame(tick);
+}
+
+function togglePause() {
+  if (!run) return;
+  const btn = document.getElementById('pause-btn');
+  if (run.paused) {
+    run.start += performance.now() - run.pausedAt;
+    run.paused = false; btn.textContent = '⏸ Pausa';
+  } else {
+    run.paused = true; run.pausedAt = performance.now(); btn.textContent = '▶ Seguir';
+    run.els.cue.textContent = 'En pausa: respira normal';
+  }
+}
+
+function screenEnding() {
+  const ex = EX[S.exId];
+  store.stickers[S.exId] = (store.stickers[S.exId] || 0) + 1;
+  saveStore();
+  const text = isJuntos() ? ex.ending.juntos : ex.ending.solo;
+  speak(text);
+  chime(659);
+  render(`
+    <div class="center stack" style="--c:${ex.color}">
+      <span class="sticker">${ex.emoji}</span>
+      <h2>¡Lo lograste!</h2>
+      <p style="font-size:22px;font-weight:700">${esc(text)}</p>
+      <div class="btn-row">
+        <button class="btn" data-act="${S.fromLibrary ? 'reward' : 'post'}">Continuar ➜</button>
+        <button class="btn ghost" data-act="start">🔁 Otra vez</button>
+      </div>
+    </div>
+  `);
+}
+
+function screenPostIntensity() {
+  const f = FEELINGS[S.post];
+  render(`
+    <div class="center stack" style="--c:${f.color}">
+      <span style="font-size:60px">${f.emoji}</span>
+      <h2>¿Y qué tan fuerte es ahora?</h2>
+      <div class="card">
+        <h3><span id="int-val">${S.postIntensity}</span>/5</h3>
+        <input class="range" type="range" min="1" max="5" step="1" value="${S.postIntensity}" data-act="post-intensity" aria-label="Intensidad de 1 a 5">
+        <div class="scale-labels"><span>🌤️</span><span>⛈️</span></div>
+      </div>
+      <div class="btn-row"><button class="btn" data-act="reward">Ver mi resultado ➜</button></div>
+    </div>
+  `);
+}
+
+function screenReward() {
+  const ex = EX[S.exId];
+  const t = tier();
+  const showInt = TIER_RANK[t] >= TIER_RANK.pre;
+  let summary = '', advice = '', alt = null;
+  if (!S.fromLibrary && S.feel && S.post) {
+    const a = FEELINGS[S.feel], b = FEELINGS[S.post];
+    summary = `<div class="summary">
+      <span class="pill" style="--c:${a.color}">Antes ${a.emoji}${showInt ? ' ' + S.intensity + '/5' : ''}</span>
+      <span>➜</span>
+      <span class="pill" style="--c:${b.color}">Ahora ${b.emoji}${showInt ? ' ' + S.postIntensity + '/5' : ''}</span>
+    </div>`;
+    const better = S.post === 'verde' || (showInt && S.post === S.feel && S.postIntensity < S.intensity);
+    if (better) {
+      advice = t === 'mini' ? '¡Tu respiración te ayudó! 🎉' : '¡Tu cuerpo te escuchó! Notaste un cambio usando solo tu respiración. 🎉';
+    } else if (S.post !== 'verde') {
+      alt = pick(FEELINGS[S.post].ex).find(id => id !== S.exId && allowed(EX[id].minTier));
+      advice = t === 'teen'
+        ? 'Las emociones no siempre cambian en un minuto, y está bien. Puedes probar otra técnica, moverte un poco o hablar con alguien de confianza.'
+        : isJuntos() ? 'Está bien si todavía se siente fuerte. ¿Probamos otro animal juntos o nos damos un abrazo?' : 'Está bien si todavía se siente fuerte. Puedes probar otro animal o buscar a un adulto de confianza.';
+    }
+  }
+  const count = store.stickers[S.exId] || 1;
+  render(`
+    <div class="center stack">
+      <h2>¡Ganaste un sticker!</h2>
+      <span class="sticker">${ex.emoji}</span>
+      <p class="lead">${esc(ex.name)} · ${count === 1 ? '¡Nuevo en tu colección!' : `Lo has practicado ${count} veces`}</p>
+      ${summary}
+      ${advice ? `<p style="font-size:20px;font-weight:700">${esc(advice)}</p>` : ''}
+      <div class="btn-row">
+        ${alt ? `<button class="btn" data-act="try-alt" data-id="${alt}">Probar ${EX[alt].emoji} ${esc(EX[alt].name)}</button>` : ''}
+        <button class="btn ${alt ? 'ghost' : ''}" data-act="menu">🏠 Menú</button>
+        <button class="btn ghost" data-act="collection">🏅 Mi colección</button>
+      </div>
+    </div>
+  `);
+}
+
+function screenLibrary() {
+  const list = EX_ORDER.filter(id => allowed(EX[id].minTier));
+  render(`
+    <div class="center stack" style="margin:14px 0 20px">
+      <h2>Todas las respiraciones 🐾</h2>
+      <p class="lead">Adaptadas para ${S.age.label}.</p>
+    </div>
+    <div class="grid tight">
+      ${list.map(id => `<button class="card tinted" style="--c:${EX[id].color}" data-act="lib-pick" data-id="${id}">
+        <span class="big">${EX[id].emoji}</span><span class="t" style="font-size:19px">${esc(EX[id].name)}</span></button>`).join('')}
+    </div>
+    <p class="center" style="margin-top:18px"><button class="footer-link" data-act="menu">← Volver al menú</button></p>
+  `);
+}
+
+function screenCollection() {
+  const n = Object.keys(store.stickers).length;
+  render(`
+    <div class="center stack" style="margin:14px 0 20px">
+      <h2>Mi colección 🏅</h2>
+      <p class="lead">${n} de ${EX_ORDER.length} stickers</p>
+    </div>
+    <div class="sticker-grid">
+      ${EX_ORDER.map(id => {
+        const c = store.stickers[id];
+        return `<div class="sticker-cell ${c ? '' : 'locked'}"><span class="e">${EX[id].emoji}</span>
+          <b style="font-size:14px">${c ? esc(EX[id].name) : '???'}</b><small>${c ? `×${c}` : 'Por descubrir'}</small></div>`;
+      }).join('')}
+    </div>
+    <p class="center" style="margin-top:18px"><button class="footer-link" data-act="${S.age ? 'menu' : 'home'}">← Volver</button></p>
+  `);
+}
+
+function screenGuide() {
+  render(`
+    <div class="guide">
+      <h2>Guía para adultos 📖</h2>
+      <p class="lead">Cómo acompañar a niñas, niños y adolescentes a respirar.</p>
+
+      <h3>🤝 Lo más importante: co-regulación</h3>
+      <ul>
+        <li>Antes de los 7 años, la calma se “contagia”: tu respiración lenta y tu voz suave regulan más que cualquier instrucción.</li>
+        <li>Primero calma, después conversación. Con enojo o miedo intensos, no es momento de explicar ni de preguntar “¿por qué?”.</li>
+        <li>Practiquen en momentos tranquilos (antes de dormir, al despertar, en el auto). Así la herramienta está lista cuando llega la tormenta.</li>
+      </ul>
+
+      <h3>🎨 Los colores</h3>
+      <ul>
+        <li><b>Verde</b>: calma, alegría, listo para aprender. <b>Amarillo</b>: nervios, preocupación, mucha emoción. <b>Rojo</b>: enojo, furia. <b>Morado</b>: miedo. <b>Azul</b>: tristeza, cansancio.</li>
+        <li>Ningún color es “malo”. Todas las emociones dan información; la respiración ayuda al cuerpo a volver a un lugar desde donde se puede pensar.</li>
+      </ul>
+
+      <h3>👶 Por edades</h3>
+      <ul>
+        <li><b>3–5 años:</b> no entienden “respira lento”. Usa imágenes concretas (oler, soplar, zumbar, rugir), objetos reales (burbujas, molinete, peluche en la panza) y solo 3 respiraciones. Sin retener el aire.</li>
+        <li><b>6–8 años:</b> animales y colores; empiezan a contar y a notar dónde sienten la emoción en el cuerpo.</li>
+        <li><b>9–12 años:</b> más palabras para las emociones, escala de intensidad y una explicación sencilla de por qué funciona.</li>
+        <li><b>13+ años:</b> técnicas “de verdad” con su ciencia, elección propia y autonomía. Invitar, nunca obligar.</li>
+      </ul>
+
+      <h3>🛟 Seguridad</h3>
+      <ul>
+        <li>Nunca forzar. Ojos abiertos está bien. Si una respiración incomoda, se cambia o se para.</li>
+        <li>Si aparece mareo u hormigueo, paren y respiren normal: suele ser por respirar demasiado rápido o profundo.</li>
+        <li>Nada de retenciones largas ni respiraciones rápidas intensas con niñas y niños.</li>
+        <li>Con asma u otras condiciones respiratorias, consulten antes con su pediatra.</li>
+        <li>Para algunas personas, sobre todo con ansiedad o experiencias difíciles, poner atención en la respiración puede incomodar. Ofrece alternativas: mirar la mano (estrella), contar objetos, moverse.</li>
+        <li>Este juego acompaña y enseña; no sustituye la atención de profesionales de salud mental.</li>
+      </ul>
+      <div class="btn-row"><button class="btn" data-act="${S.age ? 'menu' : 'home'}">← Volver</button></div>
+    </div>
+  `);
+}
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+function toggleIn(arr, v) { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); }
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  switch (act) {
+    case 'home': screenHome(); break;
+    case 'guide': screenGuide(); break;
+    case 'age':
+      S.age = AGES.find(a => a.id === id); store.ageId = id; saveStore();
+      if (!S.age.canSolo) { S.mode = 'juntos'; screenMenu(); } else screenMode();
+      break;
+    case 'to-mode': screenMode(); break;
+    case 'mode': S.mode = id; screenMenu(); break;
+    case 'menu': if (!S.age) return screenHome(); if (!S.mode) S.mode = S.age.mode; screenMenu(); break;
+    case 'checkin':
+      Object.assign(S, { feel: null, words: [], body: [], intensity: 3, post: null, postIntensity: 3, fromLibrary: false });
+      screenCheckin(false); break;
+    case 'feel': S.feel = id; screenDetails(); break;
+    case 'word': toggleIn(S.words, id); el.setAttribute('aria-pressed', String(S.words.includes(id))); break;
+    case 'body': toggleIn(S.body, id); el.setAttribute('aria-pressed', String(S.body.includes(id))); break;
+    case 'details-done': screenIntro(pick(FEELINGS[S.feel].ex).find(x => allowed(EX[x].minTier))); break;
+    case 'intro': screenIntro(id); break;
+    case 'start': screenBreath(); break;
+    case 'pause': togglePause(); break;
+    case 'finish': stopRun(); screenEnding(); break;
+    case 'post': screenCheckin(true); break;
+    case 'post-feel':
+      S.post = id;
+      if (TIER_RANK[tier()] >= TIER_RANK.pre) { S.postIntensity = S.post === S.feel ? S.intensity : 3; screenPostIntensity(); }
+      else screenReward();
+      break;
+    case 'reward': screenReward(); break;
+    case 'try-alt':
+      // nueva vuelta con el color actual
+      Object.assign(S, { feel: S.post, intensity: S.postIntensity, post: null, postIntensity: 3, fromLibrary: false });
+      screenIntro(id); break;
+    case 'library': screenLibrary(); break;
+    case 'lib-pick': S.fromLibrary = true; screenIntro(id); break;
+    case 'collection': screenCollection(); break;
+    case 'toggle-sound': store.sound = !store.sound; saveStore(); syncToggles(); if (store.sound) chime(523); break;
+    case 'toggle-voice': store.voice = !store.voice; saveStore(); syncToggles(); if (store.voice) speak('Hola, vamos a respirar juntos'); break;
+  }
+});
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.act === 'intensity') S.intensity = +el.value;
+  else if (el.dataset.act === 'post-intensity') S.postIntensity = +el.value;
+  else return;
+  const out = document.getElementById('int-val');
+  if (out) out.textContent = el.value;
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && run && !run.paused) togglePause();
+});
+
+syncToggles();
+screenHome();
+</script>
+</body>
+</html>
