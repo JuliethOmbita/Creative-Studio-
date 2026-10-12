@@ -1,6 +1,6 @@
 # Creative-Studio-
 I play around with Claude 
 
-## Projects
+## Proyectos
 
-- **[Respira Conmigo](respira-conmigo/)**: a breathing game in Spanish for kids aged 3 to 16+. Kids pick a color or emotion, then breathe like an animal (🐻 🦁 🐝 🐢 🐳 🐰 🌸 ⭐ 📦 🌊). Each age range gets its own timing and language, plus a guided mode for parents. To play, open `respira-conmigo/index.html` in a browser. The research and game ideas are in [`respira-conmigo/RESEARCH.md`](respira-conmigo/RESEARCH.md).
+- **[Respira Conmigo](respira-conmigo/)**: juego de respiración en español para niñas, niños y adolescentes de 3 a 16+ años. Eliges tu color o emoción y respiras como un animal (🐻 🦁 🐝 🐢 🐳 🐰 🌸 ⭐ 📦 🌊), con ritmo y lenguaje adaptados a cada edad y un modo guiado para mamás y papás. Cómo jugarlo y qué incluye: [`respira-conmigo/README.md`](respira-conmigo/README.md). Investigación e ideas: [`respira-conmigo/INVESTIGACION.md`](respira-conmigo/INVESTIGACION.md).
