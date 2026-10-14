@@ -55,10 +55,12 @@
     padding: 6px 12px; font-size: 15px; font-weight: 700; min-height: 40px;
   }
   .chip-btn[aria-pressed="false"] { opacity: .55; }
-  .brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .chip-btn.player { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 1; }
   @media (max-width: 420px) {
     .brand { font-size: 18px; }
     .chip-btn { padding: 6px 10px; font-size: 14px; }
+    .lbl { display: none; }
   }
 
   main { max-width: 860px; margin: 0 auto; padding: 8px 16px 48px; }
@@ -159,6 +161,27 @@
   .guide h3 { margin-top: 22px; }
   .guide ul { padding-left: 22px; margin: 6px 0; }
   .guide li { margin: 4px 0; }
+  [hidden] { display: none !important; }
+  .topnav { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .back {
+    border: 2px solid var(--line); background: var(--card); border-radius: 999px;
+    padding: 8px 16px; font-weight: 800; font-size: 16px; min-height: 44px;
+  }
+  .back:hover, .back:focus-visible { border-color: var(--accent); outline: none; }
+  .text-in {
+    width: 100%; font: inherit; font-size: 22px; padding: 12px 16px; margin-top: 8px;
+    border: 3px solid var(--line); border-radius: 16px; background: var(--bg); color: var(--ink);
+  }
+  .text-in:focus { outline: none; border-color: var(--accent); }
+  .avatar-grid { display: grid; gap: 10px; margin-top: 10px; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+  .avatar { font-size: 36px; border: 3px solid var(--line); background: var(--card); border-radius: 18px; padding: 8px; min-height: 64px; }
+  .avatar[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--card)); }
+  .profile { text-align: center; }
+  .profile.add { border-style: dashed; box-shadow: none; }
+  .profile.editing { border-style: dashed; border-color: var(--accent); }
+  .error { color: #B3261E; font-weight: 700; text-align: center; }
+  .danger-zone { text-align: center; }
+  .btn.danger { background: #C2453A; box-shadow: 0 4px 0 #8E2F27; }
   .footer-link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 16px; padding: 8px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -169,9 +192,10 @@
 </head>
 <body>
 <header class="bar">
-  <button class="brand" data-act="home" aria-label="Ir al inicio">🫧 Respira Conmigo</button>
-  <button class="chip-btn" id="tgl-sound" data-act="toggle-sound" aria-pressed="true" title="Sonido">🔔 Sonido</button>
-  <button class="chip-btn" id="tgl-voice" data-act="toggle-voice" aria-pressed="false" title="Voz que guía">🗣️ Voz</button>
+  <button class="brand" data-act="home" aria-label="Ir al inicio">🫧<span class="lbl"> Respira Conmigo</span></button>
+  <button class="chip-btn player" id="player-chip" data-act="profiles" title="Cambiar de jugador" hidden></button>
+  <button class="chip-btn" id="tgl-sound" data-act="toggle-sound" aria-pressed="true" title="Sonido" aria-label="Sonido">🔔<span class="lbl"> Sonido</span></button>
+  <button class="chip-btn" id="tgl-voice" data-act="toggle-voice" aria-pressed="false" title="Voz que guía" aria-label="Voz que guía">🗣️<span class="lbl"> Voz</span></button>
 </header>
 <main id="app"></main>
 
@@ -425,10 +449,24 @@ function loadStore() {
 function saveStore() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) { /* sin almacenamiento: el juego sigue */ }
 }
-const store = Object.assign({ stickers: {}, sound: true, voice: false, ageId: null }, loadStore());
+// Perfiles locales: viven solo en este dispositivo (sin contraseñas ni datos en internet)
+const store = Object.assign({ profiles: [], currentId: null, sound: true, voice: false }, loadStore());
+// Versión anterior sin perfiles: sus stickers pasan al primer perfil que se cree
+const legacyStickers = store.stickers && Object.keys(store.stickers).length ? store.stickers : null;
+delete store.stickers; delete store.ageId;
+
+const AVATARS = ['🦊', '🐼', '🐨', '🦄', '🐸', '🐯', '🐙', '🦋', '🐧', '🦖', '🐱', '🐶', '🐵', '🦉', '🐞', '🐬'];
+const GUEST = { id: 'guest', name: '', avatar: '🙂', ageId: null, mode: null, stickers: {} };
+function player() { return store.profiles.find(p => p.id === store.currentId) || GUEST; }
+const isGuest = () => player() === GUEST;
+function syncPlayerChip() {
+  const chip = document.getElementById('player-chip'), p = player();
+  chip.hidden = isGuest();
+  chip.textContent = isGuest() ? '' : `${p.avatar} ${p.name}`;
+}
 
 const S = {
-  age: AGES.find(a => a.id === store.ageId) || null,
+  age: null, managing: false,
   mode: null, feel: null, words: [], body: [], intensity: 3,
   post: null, postIntensity: 3, exId: null, fromLibrary: false,
 };
@@ -484,21 +522,110 @@ function render(html) {
   window.scrollTo(0, 0);
 }
 
-function screenHome() {
+function backBtn(act, label = '← Atrás', right = '') {
+  return `<nav class="topnav"><button class="back" data-act="${act}">${label}</button>${right}</nav>`;
+}
+const ageOf = p => AGES.find(a => a.id === p.ageId) || null;
+
+function screenProfiles() {
+  S.age = null; S.mode = null;
+  store.currentId = null; saveStore(); syncPlayerChip();
+  const ps = store.profiles, m = S.managing;
   render(`
     <div class="center stack" style="margin:18px 0 22px">
-      <h1>¡Hola! Vamos a respirar 🫧</h1>
-      <p class="lead">Juegos para sentir, entender y calmar el cuerpo con la respiración.<br>¿Qué edad tiene quien va a jugar?</p>
+      <h1>${m ? 'Editar perfiles ✏️' : '¿Quién va a respirar hoy? 🫧'}</h1>
+      <p class="lead">${m ? 'Toca un perfil para cambiar su nombre, su animal o su edad.' : 'Cada quien tiene su perfil, su edad y su colección de stickers.'}</p>
+    </div>
+    <div class="grid tight">
+      ${ps.map(p => `
+        <button class="card profile ${m ? 'editing' : ''}" data-act="${m ? 'edit-profile' : 'pick-profile'}" data-id="${p.id}">
+          <span class="big">${p.avatar}</span><span class="t">${esc(p.name)}</span>
+          <span class="s">${m ? '✏️ Editar' : `${ageOf(p) ? ageOf(p).label : 'Sin edad'} · ${Object.keys(p.stickers).length} 🏅`}</span>
+        </button>`).join('')}
+      ${m ? '' : `<button class="card profile add" data-act="new-profile"><span class="big">➕</span><span class="t">Nuevo jugador</span><span class="s">Crea tu perfil con tu nombre</span></button>`}
+    </div>
+    <p class="center" style="margin-top:18px">
+      ${ps.length ? `<button class="footer-link" data-act="manage">${m ? '✓ Listo' : '✏️ Editar perfiles'}</button>` : ''}
+      ${m ? '' : '<button class="footer-link" data-act="guest">Jugar sin perfil</button>'}
+      <button class="footer-link" data-act="guide">📖 Guía para adultos</button>
+    </p>
+  `);
+}
+
+let draft = null;
+function screenProfileEdit(id) {
+  const p = id ? store.profiles.find(x => x.id === id) : null;
+  draft = { id: p ? p.id : null, avatar: p ? p.avatar : AVATARS[store.profiles.length % AVATARS.length], ageId: p ? p.ageId : null };
+  render(`
+    ${backBtn('profiles', '← Volver')}
+    <div class="stack">
+      <h2 class="center">${p ? 'Editar perfil' : 'Nuevo jugador'}</h2>
+      <div class="card">
+        <label for="pf-name"><h3>¿Cómo te llamas?</h3></label>
+        <input id="pf-name" class="text-in" maxlength="20" autocomplete="off" placeholder="Escribe tu nombre" value="${p ? esc(p.name) : ''}">
+      </div>
+      <div class="card">
+        <h3>Elige tu animal</h3>
+        <div class="avatar-grid">${AVATARS.map(a => `<button class="avatar" data-act="pf-avatar" data-id="${a}" aria-pressed="${a === draft.avatar}" aria-label="Animal ${a}">${a}</button>`).join('')}</div>
+      </div>
+      <div class="card">
+        <h3>¿Qué edad tienes?</h3>
+        <div class="chips" style="margin-top:10px">${AGES.map(a => `<button class="chip" data-act="pf-age" data-id="${a.id}" aria-pressed="${a.id === draft.ageId}">${a.emoji} ${a.label}</button>`).join('')}</div>
+      </div>
+      <p class="error" id="pf-error" hidden>Escribe un nombre para el perfil.</p>
+      <div class="btn-row"><button class="btn" data-act="pf-save">${p ? 'Guardar cambios ✓' : 'Crear perfil ✓'}</button></div>
+      ${p ? `<div class="danger-zone" id="del-zone"><button class="footer-link" data-act="pf-delete">🗑️ Borrar este perfil</button></div>` : ''}
+    </div>
+  `);
+  if (!p) document.getElementById('pf-name').focus();
+}
+
+function saveProfile() {
+  const name = document.getElementById('pf-name').value.trim().slice(0, 20);
+  if (!name) { document.getElementById('pf-error').hidden = false; document.getElementById('pf-name').focus(); return; }
+  if (draft.id) {
+    Object.assign(store.profiles.find(x => x.id === draft.id), { name, avatar: draft.avatar, ageId: draft.ageId });
+    saveStore(); screenProfiles(); return;
+  }
+  const p = { id: 'p' + Date.now().toString(36), name, avatar: draft.avatar, ageId: draft.ageId, mode: null, stickers: {} };
+  if (legacyStickers && !store.profiles.length) p.stickers = legacyStickers;
+  store.profiles.push(p);
+  S.managing = false;
+  enterProfile(p);
+}
+
+function enterProfile(p) {
+  store.currentId = p.id; saveStore(); syncPlayerChip();
+  S.age = ageOf(p);
+  if (!S.age) return screenAge();
+  afterAge(false);
+}
+
+// Después de elegir la edad: 3–5 siempre juntos; si ya eligió modo antes, directo al menú
+function afterAge(askMode) {
+  const p = player();
+  if (!S.age.canSolo) { S.mode = 'juntos'; return screenMenu(); }
+  if (!askMode && p.mode) { S.mode = p.mode; return screenMenu(); }
+  screenMode();
+}
+
+function screenAge() {
+  const p = player();
+  render(`
+    ${backBtn('profiles', isGuest() ? '← Inicio' : '← Cambiar jugador')}
+    <div class="center stack" style="margin:8px 0 22px">
+      <h1>${isGuest() ? '¡Hola! Vamos a respirar 🫧' : `¡Hola, ${esc(p.name)}! ${p.avatar}`}</h1>
+      <p class="lead">${isGuest() ? '¿Qué edad tiene quien va a jugar?' : '¿Qué edad tienes?'} Si te equivocas, puedes volver y cambiarla.</p>
     </div>
     <div class="grid">
       ${AGES.map(a => `
-        <button class="card" data-act="age" data-id="${a.id}" style="--c:var(--accent)">
+        <button class="card ${S.age && S.age.id === a.id ? 'selected' : ''}" data-act="age" data-id="${a.id}" style="--c:var(--accent)">
           <span class="big">${a.emoji}</span>
           <span class="t">${a.label}</span>
           <span class="s"><b>${a.title}.</b> ${a.blurb}</span>
+          ${S.age && S.age.id === a.id ? '<span class="badge">Edad actual</span>' : ''}
         </button>`).join('')}
     </div>
-    <p class="center" style="margin-top:22px"><button class="footer-link" data-act="guide">📖 Guía para mamás, papás y educadores</button></p>
   `);
 }
 
@@ -506,7 +633,8 @@ function screenMode() {
   const a = S.age;
   const recJuntos = a.mode === 'juntos';
   render(`
-    <div class="center stack" style="margin:14px 0 20px">
+    ${backBtn('to-age', '← Cambiar edad')}
+    <div class="center stack" style="margin:8px 0 20px">
       <h2>${a.emoji} ${a.label}</h2>
       <p class="lead">¿Cómo van a jugar hoy?</p>
     </div>
@@ -522,17 +650,17 @@ function screenMode() {
         ${!recJuntos ? '<span class="badge">Recomendado para esta edad</span>' : ''}
       </button>
     </div>
-    <p class="center" style="margin-top:18px"><button class="footer-link" data-act="home">← Cambiar edad</button></p>
   `);
 }
 
 function screenMenu() {
   const a = S.age;
-  const n = Object.keys(store.stickers).length;
+  const p = player(), n = Object.keys(p.stickers).length;
   render(`
-    <div class="center stack" style="margin:14px 0 20px">
-      <h2>${a.emoji} ${a.title}</h2>
-      <p class="lead">${a.label} · ${isJuntos() ? 'Jugamos juntos 👩‍👧' : 'Por mi cuenta 🙋'}</p>
+    ${backBtn('to-age', '← Cambiar edad', `<button class="back" data-act="profiles">${isGuest() ? '👤 Crear perfil' : '👥 Cambiar jugador'}</button>`)}
+    <div class="center stack" style="margin:8px 0 20px">
+      <h2>${isGuest() ? `${a.emoji} ${a.title}` : `¡Hola, ${esc(p.name)}! ${p.avatar}`}</h2>
+      <p class="lead">${a.emoji} ${a.label} · ${isJuntos() ? 'Jugamos juntos 👩‍👧' : 'Por mi cuenta 🙋'}</p>
     </div>
     <div class="grid">
       <button class="card tinted" style="--c:var(--accent)" data-act="checkin">
@@ -549,7 +677,6 @@ function screenMenu() {
       </button>
     </div>
     <p class="center" style="margin-top:18px">
-      <button class="footer-link" data-act="home">Cambiar edad</button>
       ${a.canSolo ? '<button class="footer-link" data-act="to-mode">Cambiar modo</button>' : ''}
       <button class="footer-link" data-act="guide">Guía para adultos</button>
     </p>
@@ -567,7 +694,8 @@ function screenCheckin(post = false) {
     : (t === 'mini' ? '¿Cómo te sientes? Señala tu carita.' : t === 'kid' ? '¿De qué color es lo que sientes ahora?' : '¿En qué color estás ahora mismo?');
   const keys = feelingsForTier();
   render(`
-    <div class="center stack" style="margin:14px 0 20px">
+    ${post ? '' : backBtn('menu', '← Menú')}
+    <div class="center stack" style="margin:${post ? 14 : 8}px 0 20px">
       <h2>${q}</h2>
       ${!post && isJuntos() && t === 'mini' ? '<div class="note" style="text-align:left"><b>👩‍👧 Para el adulto</b>Lee en voz alta, señala cada carita y haz la cara tú también. Si no sabe elegir, nombra lo que observas: “Veo que tus manos están apretadas… ¿será enojo?”.</div>' : ''}
       ${!post && t !== 'mini' ? '<p class="lead">No hay respuestas buenas o malas: todos los colores son parte de ti.</p>' : ''}
@@ -587,6 +715,7 @@ function screenDetails() {
   const f = FEELINGS[S.feel];
   if (t === 'mini') return screenIntro(pick(f.ex)[0]);
   render(`
+    ${backBtn('checkin', '← Elegir otro color')}
     <div class="stack" style="--c:${f.color}">
       <div class="center"><span style="font-size:60px">${f.emoji}</span><h2>Vamos a conocer ese ${S.feel}</h2></div>
       ${t !== 'kid' ? `
@@ -621,7 +750,10 @@ function screenIntro(exId) {
   const f = S.feel && !S.fromLibrary ? FEELINGS[S.feel] : null;
   const c = f ? f.color : ex.color;
   const alts = f ? pick(f.ex).filter(id => id !== exId && allowed(EX[id].minTier)) : [];
+  const back = S.fromLibrary ? backBtn('library', '← Todas las respiraciones')
+    : tier() === 'mini' ? backBtn('checkin', '← Elegir otra carita') : backBtn('details', '← Atrás');
   render(`
+    ${back}
     <div class="stack" style="--c:${c}">
       ${f ? `<div class="validate">${esc(pick(f.msg))}</div>` : ''}
       <div class="center">
@@ -775,7 +907,8 @@ function togglePause() {
 
 function screenEnding() {
   const ex = EX[S.exId];
-  store.stickers[S.exId] = (store.stickers[S.exId] || 0) + 1;
+  const st = player().stickers;
+  st[S.exId] = (st[S.exId] || 0) + 1;
   saveStore();
   const text = isJuntos() ? ex.ending.juntos : ex.ending.solo;
   speak(text);
@@ -831,7 +964,7 @@ function screenReward() {
         : isJuntos() ? 'Está bien si todavía se siente fuerte. ¿Probamos otro animal juntos o nos damos un abrazo?' : 'Está bien si todavía se siente fuerte. Puedes probar otro animal o buscar a un adulto de confianza.';
     }
   }
-  const count = store.stickers[S.exId] || 1;
+  const count = player().stickers[S.exId] || 1;
   render(`
     <div class="center stack">
       <h2>¡Ganaste un sticker!</h2>
@@ -851,7 +984,8 @@ function screenReward() {
 function screenLibrary() {
   const list = EX_ORDER.filter(id => allowed(EX[id].minTier));
   render(`
-    <div class="center stack" style="margin:14px 0 20px">
+    ${backBtn('menu', '← Menú')}
+    <div class="center stack" style="margin:8px 0 20px">
       <h2>Todas las respiraciones 🐾</h2>
       <p class="lead">Adaptadas para ${S.age.label}.</p>
     </div>
@@ -859,30 +993,30 @@ function screenLibrary() {
       ${list.map(id => `<button class="card tinted" style="--c:${EX[id].color}" data-act="lib-pick" data-id="${id}">
         <span class="big">${EX[id].emoji}</span><span class="t" style="font-size:19px">${esc(EX[id].name)}</span></button>`).join('')}
     </div>
-    <p class="center" style="margin-top:18px"><button class="footer-link" data-act="menu">← Volver al menú</button></p>
   `);
 }
 
 function screenCollection() {
-  const n = Object.keys(store.stickers).length;
+  const p = player(), n = Object.keys(p.stickers).length;
   render(`
-    <div class="center stack" style="margin:14px 0 20px">
-      <h2>Mi colección 🏅</h2>
+    ${backBtn(S.age ? 'menu' : 'profiles', S.age ? '← Menú' : '← Volver')}
+    <div class="center stack" style="margin:8px 0 20px">
+      <h2>${isGuest() ? 'Mi colección' : `Colección de ${esc(p.name)}`} 🏅</h2>
       <p class="lead">${n} de ${EX_ORDER.length} stickers</p>
     </div>
     <div class="sticker-grid">
       ${EX_ORDER.map(id => {
-        const c = store.stickers[id];
+        const c = p.stickers[id];
         return `<div class="sticker-cell ${c ? '' : 'locked'}"><span class="e">${EX[id].emoji}</span>
           <b style="font-size:14px">${c ? esc(EX[id].name) : '???'}</b><small>${c ? `×${c}` : 'Por descubrir'}</small></div>`;
       }).join('')}
     </div>
-    <p class="center" style="margin-top:18px"><button class="footer-link" data-act="${S.age ? 'menu' : 'home'}">← Volver</button></p>
   `);
 }
 
 function screenGuide() {
   render(`
+    ${backBtn(S.age ? 'menu' : 'profiles', '← Volver')}
     <div class="guide">
       <h2>Guía para adultos 📖</h2>
       <p class="lead">Cómo acompañar a niñas, niños y adolescentes a respirar.</p>
@@ -917,7 +1051,12 @@ function screenGuide() {
         <li>Para algunas personas, sobre todo con ansiedad o experiencias difíciles, poner atención en la respiración puede incomodar. Ofrece alternativas: mirar la mano (estrella), contar objetos, moverse.</li>
         <li>Este juego acompaña y enseña; no sustituye la atención de profesionales de salud mental.</li>
       </ul>
-      <div class="btn-row"><button class="btn" data-act="${S.age ? 'menu' : 'home'}">← Volver</button></div>
+      <h3>👥 Perfiles</h3>
+      <ul>
+        <li>Cada niña o niño puede tener su perfil con su nombre, su animal, su edad y su colección de stickers.</li>
+        <li>Los perfiles se guardan solo en este dispositivo y navegador: no hay contraseñas ni datos en internet.</li>
+      </ul>
+      <div class="btn-row"><button class="btn" data-act="${S.age ? 'menu' : 'profiles'}">← Volver</button></div>
     </div>
   `);
 }
@@ -932,15 +1071,43 @@ document.addEventListener('click', e => {
   if (!el) return;
   const act = el.dataset.act, id = el.dataset.id;
   switch (act) {
-    case 'home': screenHome(); break;
+    case 'home': case 'profiles': S.managing = false; screenProfiles(); break;
+    case 'manage': S.managing = !S.managing; screenProfiles(); break;
+    case 'new-profile': screenProfileEdit(null); break;
+    case 'edit-profile': screenProfileEdit(id); break;
+    case 'pick-profile': enterProfile(store.profiles.find(p => p.id === id)); break;
+    case 'guest': store.currentId = null; S.age = null; syncPlayerChip(); screenAge(); break;
+    case 'pf-avatar':
+      draft.avatar = id;
+      document.querySelectorAll('[data-act="pf-avatar"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
+      break;
+    case 'pf-age':
+      draft.ageId = draft.ageId === id ? null : id;
+      document.querySelectorAll('[data-act="pf-age"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === draft.ageId)));
+      break;
+    case 'pf-save': saveProfile(); break;
+    case 'pf-delete': {
+      const p = store.profiles.find(x => x.id === draft.id);
+      document.getElementById('del-zone').innerHTML = `
+        <p style="font-weight:700">¿Borrar el perfil de ${esc(p.name)}? También se borran sus stickers.</p>
+        <div class="btn-row"><button class="btn danger" data-act="pf-delete-yes">Sí, borrar</button><button class="btn ghost" data-act="edit-profile" data-id="${p.id}">Cancelar</button></div>`;
+      break;
+    }
+    case 'pf-delete-yes':
+      store.profiles = store.profiles.filter(x => x.id !== draft.id);
+      if (!store.profiles.length) S.managing = false;
+      saveStore(); screenProfiles(); break;
+    case 'to-age': screenAge(); break;
+    case 'details': screenDetails(); break;
     case 'guide': screenGuide(); break;
     case 'age':
-      S.age = AGES.find(a => a.id === id); store.ageId = id; saveStore();
-      if (!S.age.canSolo) { S.mode = 'juntos'; screenMenu(); } else screenMode();
+      S.age = AGES.find(a => a.id === id);
+      player().ageId = id; saveStore();
+      afterAge(true);
       break;
     case 'to-mode': screenMode(); break;
-    case 'mode': S.mode = id; screenMenu(); break;
-    case 'menu': if (!S.age) return screenHome(); if (!S.mode) S.mode = S.age.mode; screenMenu(); break;
+    case 'mode': S.mode = id; player().mode = id; saveStore(); screenMenu(); break;
+    case 'menu': if (!S.age) return screenProfiles(); if (!S.mode) S.mode = S.age.mode; screenMenu(); break;
     case 'checkin':
       Object.assign(S, { feel: null, words: [], body: [], intensity: 3, post: null, postIntensity: 3, fromLibrary: false });
       screenCheckin(false); break;
@@ -980,12 +1147,16 @@ document.addEventListener('input', e => {
   if (out) out.textContent = el.value;
 });
 
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'pf-name') saveProfile();
+});
+
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && run && !run.paused) togglePause();
 });
 
 syncToggles();
-screenHome();
+screenProfiles();
 </script>
 </body>
 </html>

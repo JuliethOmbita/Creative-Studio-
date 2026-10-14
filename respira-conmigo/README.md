@@ -11,6 +11,8 @@ GitHub muestra el código, pero no ejecuta el juego. Para jugar:
 
 ## 🎮 Qué incluye
 
+- **Perfiles por jugador:** cada niña o niño crea su perfil con su nombre, su animal y su edad, y tiene su propia colección de stickers. Se pueden editar y borrar. Se guardan solo en el dispositivo (sin contraseñas ni datos en internet).
+- **Botones para volver** en cada pantalla (por ejemplo, para cambiar la edad si se eligió mal).
 - **5 grupos de edad:** 3–5 (Semillitas), 6–8 (Exploradores), 9–12 (Aventureros), 13–15 (Navegantes) y 16+ (Por mi cuenta).
 - **Dos modos:** *Juntos*, con un adulto que guía y recibe un guion en cada pantalla, o *Por mi cuenta*.
 - **Check-in por colores:** 🟩 calma · 🟨 nervios · 🟥 enojo · 🟪 miedo · 🟦 tristeza. Cada color lleva a un animal.
