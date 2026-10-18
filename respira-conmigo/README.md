@@ -14,12 +14,13 @@ GitHub muestra el código, pero no ejecuta el juego. Para jugar:
 - **Perfiles por jugador:** cada niña o niño crea su perfil con su nombre, su animal y su edad, y tiene su propia colección de stickers. Se pueden editar y borrar. Se guardan solo en el dispositivo (sin contraseñas ni datos en internet).
 - **Botones para volver** en cada pantalla (por ejemplo, para cambiar la edad si se eligió mal).
 - **5 grupos de edad:** 3–5 (Semillitas), 6–8 (Exploradores), 9–12 (Aventureros), 13–15 (Navegantes) y 16+ (Por mi cuenta).
-- **Dos modos:** *Juntos*, con un adulto que guía y recibe un guion en cada pantalla, o *Por mi cuenta*.
+- **Dos modos:** *Juntos*, con un adulto que guía y recibe un guion en cada pantalla, o *Por mi cuenta*. Se cambia en cualquier momento desde el menú.
 - **Check-in por colores:** 🟩 calma · 🟨 nervios · 🟥 enojo · 🟪 miedo · 🟦 tristeza. Cada color lleva a un animal.
-- **11 respiraciones:** 🐻 oso, 🦁 león, 🐝 abeja, 🐢 tortuga, 🐳 ballena, 🐰 conejito, 🌸 flor y vela, ⭐ estrella de 5 dedos, 📦 caja, 😮‍💨 suspiro doble y 🌊 ola.
+- **11 respiraciones:** 🐻 oso, 🦁 león, 🐝 abeja, 🐢 tortuga, 🐳 ballena, 🐰 conejito, 🌸 flor y vela, ✋ respiración de la mano (dedo por dedo), 📦 caja, 😮‍💨 suspiro doble y 🌊 ola.
 - **Ritmo y lenguaje adaptados a cada edad.** Los más pequeños nunca retienen el aire; desde los 9 años se explica por qué funciona cada respiración.
 - **Antes y después:** colección de stickers, sugerencia de otro animal si la emoción sigue fuerte, y cierres afectivos como el *abrazo de oso*.
-- **Voz guía en español y sonido opcionales.**
+- **Voz guía en español y sonido opcionales.** La voz lee las explicaciones y las indicaciones (botón 🔊 Escuchar). En *🗣️ Voz* se elige la voz más natural del dispositivo.
+- **Listo para una voz humana grabada:** si se graban audios (por ejemplo, con la voz de la coach), se agregan en `CLIPS` dentro de `index.html` y suenan en lugar de la voz del dispositivo.
 - **Guía para mamás, papás y educadores,** con notas de seguridad.
 
 ## 📚 Investigación

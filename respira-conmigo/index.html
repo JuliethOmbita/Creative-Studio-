@@ -182,6 +182,15 @@
   .error { color: #B3261E; font-weight: 700; text-align: center; }
   .danger-zone { text-align: center; }
   .btn.danger { background: #C2453A; box-shadow: 0 4px 0 #8E2F27; }
+  .seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--card); border: 2px solid var(--line); flex-wrap: wrap; justify-content: center; }
+  .seg-btn { border: 0; background: none; border-radius: 999px; padding: 8px 16px; font-weight: 800; font-size: 16px; min-height: 42px; }
+  .seg-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .listen { border: 2px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 15px; min-height: 40px; }
+  .voice-list { display: grid; gap: 8px; margin-top: 10px; }
+  .voice-opt { display: flex; align-items: center; gap: 10px; text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: 14px; padding: 10px 14px; font-size: 16px; font-weight: 700; min-height: 48px; }
+  .voice-opt[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+  .voice-opt small { color: var(--muted); font-weight: 600; margin-left: auto; }
+  .stage .finger { transition: fill .3s; }
   .footer-link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-size: 16px; padding: 8px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -365,16 +374,16 @@ const EX = {
     why: 'Alargar la exhalación y orientarse en el espacio (nombrar lo que ves y escuchas) le dicen al sistema de alarma que no hay peligro inmediato.',
   },
   estrella: {
-    name: 'Estrella de 5 dedos', emoji: '⭐', color: 'var(--verde)', visual: 'estrella', minTier: 'mini', rounds: 5,
+    name: 'Respiración de la mano', emoji: '✋', color: 'var(--verde)', visual: 'mano', minTier: 'mini', rounds: 5,
     intro: {
-      mini: 'Abre tu manita como una estrella. ⭐ Con un dedito de la otra mano vamos a subir y bajar por cada dedo.',
-      kid: 'Abre tu mano como estrella. Con el dedo índice de la otra mano, sube por un dedo mientras inhalas y baja mientras exhalas. ¡5 dedos, 5 respiraciones!',
-      pre: 'Respiración de los 5 dedos: tocar y mirar tu mano te ancla al presente cuando la mente se acelera. Sube por cada dedo inhalando, baja exhalando.' },
+      mini: 'Abre tu manita frente a ti. ✋ Con un dedito de la otra mano vamos a subir y bajar por cada dedo, igual que en la pantalla.',
+      kid: 'Abre una mano frente a ti, con los dedos separados. Con el índice de la otra mano, recorre el borde de tu mano: subes por un dedo mientras inhalas y bajas al hueco entre dos dedos mientras exhalas. Empiezas en el pulgar y terminas en el meñique: 5 dedos, 5 respiraciones.',
+      pre: 'Abre una mano frente a ti con los dedos separados. Con el índice de la otra mano vas a dibujar el contorno de tu mano, como si la calcaras: subes por el pulgar inhalando, bajas al hueco entre el pulgar y el índice exhalando, y así con cada dedo hasta el meñique. La mano de la pantalla te muestra por dónde vas. Tocar y mirar tu mano ancla tu atención al presente.' },
     phases: [
       { t: 'in',  cue: 'Sube por el dedo… inhala ☝️' },
       { t: 'out', cue: 'Baja… exhala 👇' },
     ],
-    ending: { juntos: 'Junten las manos y frótenlas hasta que se calienten. ¡Lo hicieron! ⭐', solo: 'Junta las manos y frótalas hasta que se calienten. ¡Lo hiciste! ⭐' },
+    ending: { juntos: 'Junten las manos y frótenlas hasta que se calienten. ¡Lo hicieron! ✋', solo: 'Junta las manos y frótalas hasta que se calienten. ¡Lo hiciste! ✋' },
     adult: 'Al principio, traza tú el recorrido sobre su mano: el tacto ayuda a los más pequeños a seguir el ritmo.',
     why: 'Combinar tacto, vista y respiración (multisensorial) facilita la atención y le da a la mente algo concreto que seguir.',
   },
@@ -497,13 +506,44 @@ function chime(freq) {
     o.start(t); o.stop(t + 1);
   } catch (e) { /* audio no disponible */ }
 }
-function speak(text) {
-  if (!store.voice || !('speechSynthesis' in window)) return;
+// Grabaciones de una voz humana: si hay un audio para un texto exacto, suena en lugar de la voz del dispositivo.
+// Ejemplo: CLIPS['Huele la flor 🌸'] = 'audio/huele-la-flor.mp3';
+const CLIPS = {};
+let clipAudio = null;
+
+function spanishVoices() {
+  try { return speechSynthesis.getVoices().filter(v => /^es/i.test(v.lang)); } catch (e) { return []; }
+}
+// Las voces "naturales" o "mejoradas" suenan mucho menos robóticas que las básicas
+function voiceScore(v) {
+  const n = v.name.toLowerCase();
+  let sc = 0;
+  if (/natural|neural|premium|enhanced|mejorada|siri/.test(n)) sc += 10;
+  if (/google/.test(n)) sc += 6;
+  if (/^es[-_](mx|us|419|co|ar|cl|pe)/i.test(v.lang)) sc += 2;
+  if (/compact|espeak/.test(n)) sc -= 10;
+  return sc;
+}
+function bestVoice() {
+  const vs = spanishVoices();
+  return vs.find(v => v.name === store.voiceName) || vs.sort((a, b) => voiceScore(b) - voiceScore(a))[0] || null;
+}
+function stopVoice() {
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
+  if (clipAudio) { clipAudio.pause(); clipAudio = null; }
+}
+function speak(text, force = false) {
+  if (!store.voice && !force) return;
+  stopVoice();
+  if (CLIPS[text]) {
+    try { clipAudio = new Audio(CLIPS[text]); clipAudio.play().catch(() => {}); } catch (e) {}
+    return;
+  }
+  if (!('speechSynthesis' in window)) return;
   try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(String(text).replace(/\p{Extended_Pictographic}|️|‍/gu, '').trim());
-    u.lang = 'es-ES'; u.rate = 0.85; u.pitch = 1.1;
-    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\p{Extended_Pictographic}|\uFE0F|\u200D/gu, '').trim());
+    const v = bestVoice();
+    u.lang = v ? v.lang : 'es-MX'; u.rate = 0.9; u.pitch = 1;
     if (v) u.voice = v;
     speechSynthesis.speak(u);
   } catch (e) { /* voz no disponible */ }
@@ -660,7 +700,11 @@ function screenMenu() {
     ${backBtn('to-age', '← Cambiar edad', `<button class="back" data-act="profiles">${isGuest() ? '👤 Crear perfil' : '👥 Cambiar jugador'}</button>`)}
     <div class="center stack" style="margin:8px 0 20px">
       <h2>${isGuest() ? `${a.emoji} ${a.title}` : `¡Hola, ${esc(p.name)}! ${p.avatar}`}</h2>
-      <p class="lead">${a.emoji} ${a.label} · ${isJuntos() ? 'Jugamos juntos 👩‍👧' : 'Por mi cuenta 🙋'}</p>
+      <p class="lead">${a.emoji} ${a.label}</p>
+      ${a.canSolo ? `<div><div class="seg" role="group" aria-label="Cómo jugar">
+        <button class="seg-btn" data-act="set-mode" data-id="juntos" aria-pressed="${isJuntos()}">👩‍👧 Juntos</button>
+        <button class="seg-btn" data-act="set-mode" data-id="solo" aria-pressed="${!isJuntos()}">🙋 Por mi cuenta</button>
+      </div></div>` : '<p class="lead">👩‍👧 A esta edad siempre jugamos juntos</p>'}
     </div>
     <div class="grid">
       <button class="card tinted" style="--c:var(--accent)" data-act="checkin">
@@ -677,7 +721,7 @@ function screenMenu() {
       </button>
     </div>
     <p class="center" style="margin-top:18px">
-      ${a.canSolo ? '<button class="footer-link" data-act="to-mode">Cambiar modo</button>' : ''}
+      <button class="footer-link" data-act="voice">🗣️ Voz</button>
       <button class="footer-link" data-act="guide">Guía para adultos</button>
     </p>
   `);
@@ -750,6 +794,8 @@ function screenIntro(exId) {
   const f = S.feel && !S.fromLibrary ? FEELINGS[S.feel] : null;
   const c = f ? f.color : ex.color;
   const alts = f ? pick(f.ex).filter(id => id !== exId && allowed(EX[id].minTier)) : [];
+  S.readText = (f ? pick(f.msg) + ' ' : '') + pick(ex.intro);
+  setTimeout(() => { if (document.querySelector('[data-act="listen"]')) speak(S.readText); }, 300);
   const back = S.fromLibrary ? backBtn('library', '← Todas las respiraciones')
     : tier() === 'mini' ? backBtn('checkin', '← Elegir otra carita') : backBtn('details', '← Atrás');
   render(`
@@ -761,6 +807,7 @@ function screenIntro(exId) {
         <h2>${esc(ex.name)}</h2>
       </div>
       <p style="font-size:20px">${esc(pick(ex.intro))}</p>
+      <div><button class="listen" data-act="listen">🔊 Escuchar</button></div>
       ${isJuntos() ? `<div class="note"><b>👩‍👧 Para el adulto</b>${esc(ex.adult)}</div>` : ''}
       ${TIER_RANK[tier()] >= TIER_RANK.pre ? `<div class="note science"><b>🔬 ¿Por qué funciona?</b>${esc(ex.why)}</div>` : ''}
       <div class="btn-row">
@@ -775,7 +822,7 @@ function screenIntro(exId) {
 let run = null;
 function stopRun() {
   if (run) { cancelAnimationFrame(run.raf); run = null; }
-  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {}
+  stopVoice();
 }
 
 function buildTimeline(ex) {
@@ -797,7 +844,23 @@ function buildTimeline(ex) {
 
 const ease = k => 0.5 - Math.cos(Math.PI * k) / 2;
 
+const FINGERS = ['pulgar', 'índice', 'dedo medio', 'anular', 'meñique'];
+// Recorrido de la mano: base del pulgar → punta → hueco → punta… → borde del meñique (11 puntos, 10 tramos)
+const HAND_ROUTE = [[82, 246], [24, 150], [90, 190], [107, 42], [124, 150], [142, 27], [159, 150], [177, 42], [194, 155], [211, 77], [226, 205]];
+
+function handSvg(c) {
+  const fill = `color-mix(in srgb, ${c} 14%, var(--card))`;
+  const f = (id, x, y, w, h, extra = '') =>
+    `<rect id="${id}" class="finger" x="${x}" y="${y}" width="${w}" height="${h}" rx="${w / 2}" fill="${fill}" stroke="${c}" stroke-width="6" ${extra}/>`;
+  return f('f0', 80, 125, 30, 110, 'transform="rotate(-40 95 235)"')
+    + f('f1', 92, 40, 30, 150) + f('f2', 127, 25, 30, 165) + f('f3', 162, 40, 30, 150) + f('f4', 197, 75, 28, 120)
+    + `<rect x="88" y="150" width="140" height="125" rx="40" fill="${fill}" stroke="${c}" stroke-width="6"/>`
+    + `<rect x="94" y="140" width="128" height="26" fill="${fill}"/>`
+    + `<polyline points="${HAND_ROUTE.map(p => p.join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="4 8" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
+}
+
 function pathPoints(kind) {
+  if (kind === 'mano') return HAND_ROUTE;
   if (kind === 'caja') return [[60, 240], [60, 60], [240, 60], [240, 240]];
   const pts = [];
   for (let k = 0; k < 10; k++) {
@@ -818,9 +881,11 @@ function screenBreath() {
     const pts = pathPoints(ex.visual);
     const poly = pts.map(p => p.join(',')).join(' ');
     stage = `<svg viewBox="0 0 300 300" aria-hidden="true">
-      <polygon points="${poly}" fill="color-mix(in srgb, ${c} 14%, transparent)" stroke="${c}" stroke-width="8" stroke-linejoin="round"/>
+      ${ex.visual === 'mano' ? handSvg(c) : `<polygon points="${poly}" fill="color-mix(in srgb, ${c} 14%, transparent)" stroke="${c}" stroke-width="8" stroke-linejoin="round"/>`}
       <line id="seg" x1="0" y1="0" x2="0" y2="0" stroke="${c}" stroke-width="14" stroke-linecap="round" opacity=".35"/>
-      <text id="dot" class="dot" x="${pts[0][0]}" y="${pts[0][1]}" text-anchor="middle" dominant-baseline="central">${ex.emoji}</text>
+      ${ex.visual === 'mano'
+        ? `<circle id="dot" cx="${pts[0][0]}" cy="${pts[0][1]}" r="11" fill="${c}" stroke="var(--card)" stroke-width="4"/>`
+        : `<text id="dot" class="dot" x="${pts[0][0]}" y="${pts[0][1]}" text-anchor="middle" dominant-baseline="central">${ex.emoji}</text>`}
     </svg>`;
   }
   render(`
@@ -858,7 +923,14 @@ function nextPhase(now) {
   const p = run.seq[run.i];
   run.from = run.level; run.start = now;
   run.to = p.to != null ? p.to : p.t === 'in' ? 1 : p.t === 'out' ? 0 : run.level;
-  const cue = pick(p.cue) || (p.t === 'hold' ? 'Pausa suave…' : '');
+  let cue = pick(p.cue) || (p.t === 'hold' ? 'Pausa suave…' : '');
+  if (run.ex.visual === 'mano' && p.t !== 'ready') {
+    const k = Math.floor((run.i - 1) / 2);
+    cue = p.t === 'in' ? `Sube por el ${FINGERS[k]}… inhala ☝️` : k === 4 ? 'Baja por el borde del meñique… exhala 👇' : 'Baja al hueco entre los dedos… exhala 👇';
+    const c = getComputedStyle(run.els.cue).getPropertyValue('--c') || 'var(--verde)';
+    document.querySelectorAll('.stage .finger').forEach((el, j) =>
+      el.setAttribute('fill', `color-mix(in srgb, ${c} ${j === k ? 45 : 14}%, var(--card))`));
+  }
   run.els.cue.textContent = cue;
   if (run.els.emo) run.els.emo.textContent = p.emoji || run.ex.emoji;
   if (run.els.globo) run.els.globo.classList.toggle('buzz', !!p.buzz);
@@ -882,7 +954,8 @@ function tick(now) {
       const idx = run.i - 1, n = run.pts.length;
       const A = run.pts[idx % n], B = run.pts[(idx + 1) % n], e = ease(k);
       const x = A[0] + (B[0] - A[0]) * e, y = A[1] + (B[1] - A[1]) * e;
-      run.els.dot.setAttribute('x', x); run.els.dot.setAttribute('y', y);
+      const isCircle = run.els.dot.tagName === 'circle';
+      run.els.dot.setAttribute(isCircle ? 'cx' : 'x', x); run.els.dot.setAttribute(isCircle ? 'cy' : 'y', y);
       run.els.seg.setAttribute('x1', A[0]); run.els.seg.setAttribute('y1', A[1]);
       run.els.seg.setAttribute('x2', x); run.els.seg.setAttribute('y2', y);
     }
@@ -1014,6 +1087,39 @@ function screenCollection() {
   `);
 }
 
+function screenVoice() {
+  const vs = spanishVoices().sort((a, b) => voiceScore(b) - voiceScore(a));
+  const cur = bestVoice();
+  render(`
+    ${backBtn(S.age ? 'menu' : 'profiles', '← Volver')}
+    <div class="stack">
+      <h2>Voz que guía 🗣️</h2>
+      <div class="card">
+        <h3>Voz encendida</h3>
+        <p class="s" style="color:var(--muted)">Lee en voz alta las explicaciones y las indicaciones de cada respiración.</p>
+        <div class="seg" style="margin-top:10px">
+          <button class="seg-btn" data-act="voice-on" aria-pressed="${store.voice}">Sí</button>
+          <button class="seg-btn" data-act="voice-off" aria-pressed="${!store.voice}">No</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Elige la voz</h3>
+        <p class="s" style="color:var(--muted)">Toca una voz para escucharla. Las marcadas con ⭐ suelen sonar más naturales.</p>
+        <div class="voice-list">
+          ${vs.length ? vs.map(v => `<button class="voice-opt" data-act="pick-voice" data-id="${esc(v.name)}" aria-pressed="${cur && cur.name === v.name}">
+            ${voiceScore(v) >= 6 ? '⭐' : '🔈'} ${esc(v.name)} <small>${esc(v.lang)}</small></button>`).join('')
+            : '<p>Este navegador no tiene voces en español disponibles.</p>'}
+        </div>
+      </div>
+      <div class="note">
+        <b>¿Suena robótica?</b>
+        Las voces dependen del teléfono o la computadora. En iPhone y iPad puedes descargar voces en español de mejor calidad en
+        Ajustes › Accesibilidad › Contenido leído › Voces. En Android, en Ajustes › Texto a voz. Chrome y Edge incluyen voces naturales.
+      </div>
+    </div>
+  `);
+}
+
 function screenGuide() {
   render(`
     ${backBtn(S.age ? 'menu' : 'profiles', '← Volver')}
@@ -1098,6 +1204,12 @@ document.addEventListener('click', e => {
       if (!store.profiles.length) S.managing = false;
       saveStore(); screenProfiles(); break;
     case 'to-age': screenAge(); break;
+    case 'set-mode': S.mode = id; player().mode = id; saveStore(); screenMenu(); break;
+    case 'listen': speak(S.readText, true); break;
+    case 'voice': screenVoice(); break;
+    case 'voice-on': store.voice = true; saveStore(); syncToggles(); screenVoice(); speak('Hola, vamos a respirar juntos.'); break;
+    case 'voice-off': store.voice = false; saveStore(); syncToggles(); stopVoice(); screenVoice(); break;
+    case 'pick-voice': store.voiceName = id; saveStore(); screenVoice(); speak('Hola. Huele la flor… y sopla la vela despacito.', true); break;
     case 'details': screenDetails(); break;
     case 'guide': screenGuide(); break;
     case 'age':
@@ -1155,6 +1267,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden && run && !run.paused) togglePause();
 });
 
+try { speechSynthesis.addEventListener('voiceschanged', () => { if (document.querySelector('.voice-list')) screenVoice(); }); } catch (e) {}
 syncToggles();
 screenProfiles();
 </script>
